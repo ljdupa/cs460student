@@ -31,10 +31,10 @@
           }
         }
 
-        r.camera.position = [0, 0, 300];  // Part 3
+        r.camera.position = [0, 0, 300];  
         r.render();
 
-        // optional: hover-rotate
+
         r.interactor.onMouseMove = function (event) {
           const id = r.pick(event.offsetX, event.offsetY);
           if (id) r.get(id).transform.rotateX(10);
