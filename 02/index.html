@@ -9,103 +9,36 @@
 
       <script type="text/javascript" src="https://get.goXTK.com/xtk_edge.js"></script>
 
-      <script>
+    <script>
+      window.onload = function () {
+        const r = new X.renderer3D();
+        r.init();
 
-          window.onload = function() {
+        const SIZE = 5;
+        const GAP  = 2;
 
-              // once everything is done loading
+        for (let z = -5; z < 6; z++) {
+          for (let y = -5; y < 6; y++) {
+            for (let x = -5; x < 6; x++) {
+              const new_cube = new X.cube();
+              new_cube.transform.translateX((SIZE + GAP) * x);
+              new_cube.transform.translateY((SIZE + GAP) * y);
+              new_cube.transform.translateZ((SIZE + GAP) * z);
+              r.add(new_cube);
+            }
+          }
+        }
 
-              r = new X.renderer3D();
-              r.init();
+        r.render();
 
-              const SIZE = 5;
-              const GAP = 2;
-
-              for (var z=-5; z < 6; z++){
-                for (var y=-5; y < 6; y++){
-                    for (var x=-5; x < 6; x++){
-
-                        new_cube = new X.cube();
-                        new_cube.transform.translateX((SIZE + GAP) * x);
-                        new_cube.transform.translateY((SIZE + GAP) * y);
-                        new_cube.transform.translateZ((SIZE + GAP * z);
-                    
-                        r.add(new_cube);
-                        }
-                    }
-                }
-              }
-
-              c = new X.cube();
-              // c.color = [1, 0, 0];
-                      // R  G  B
-
-              r.add(c);
-
-
-              c2 = new X.cube();
-              c2.color = [0, 0, 1];
-                        // R  G  B
-              c2.center = [10, 0, 0];
-
-              c2.lengthX = 20.1;
-              c2.lengthY = 20.1;
-              c2.lengthZ = 20.1;
-
-              r.add(c2);
-
-
-              // c3 = new X.cube();
-              // c3.center = [0, 30, 0];
-              // r.add(c3);
-
-              // for(var i=0; i < 10; i++) {
-
-              //     c4 = new X.cube();
-              //     c4.center = [0, 30 + 30*i, 0];
-
-              //     r.add(c4);
-
-
-              // }
-
-
-
-              r.render();
-
-              // console.log('Hello CS460!')
-
-              // r.onRender = function() {
-
-              //     // this gets executed every single frame
-
-              //     // rotating the camera by 1 degree
-              //     r.camera.rotate([20, 0]);
-
-              //     // rotating the cube by 10 degrees
-              //     c.transform.rotateX(10);
-
-
-              // }
-
-r.interactor.onMouseMove = 
-function(event) { 
-
-
-    console.log('test', event.offsetX, event.offsetY);
-                                      
-    cubeid =  r.pick(event.offsetX, event.offsetY) ;
-
-    if (cubeid != 0)
-        r.get( cubeid ).transform.rotateX(10);
-
-          };
-
-  }
-
-      </script>
-
-  </head>
-  <body>
+        // (optional) hover to rotate the cube under the cursor
+        r.interactor.onMouseMove = function (event) {
+          const cubeid = r.pick(event.offsetX, event.offsetY);
+          if (cubeid) {
+            r.get(cubeid).transform.rotateX(10);
+          }
+        };
+      };
+    </script>
   </body>
 </html>
