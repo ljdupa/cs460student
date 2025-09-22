@@ -12,7 +12,8 @@
     </head>
 
     <body>    
-        <script>
+    <script>
+      let SELECTED_CUBE = null;  
       window.onload = function () {
         const r = new X.renderer3D();
         r.init();
@@ -37,7 +38,7 @@
 
         r.interactor.onMouseMove = function (event) {
           const id = r.pick(event.offsetX, event.offsetY);
-          if (id) r.get(id).transform.rotateX(10);
+          SELECTED_CUBE = id ? r.get(id) : null;
         };
       };
     </script>
