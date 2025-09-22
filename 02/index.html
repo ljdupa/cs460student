@@ -1,42 +1,43 @@
 <html>
-  <head>
+    <head>
+    <style>
 
-      <style>
-        body {
+        body{
             background-color: black;
         }
-      </style>
+    </style>
 
-      <script type="text/javascript" src="https://get.goXTK.com/xtk_edge.js"></script>
+    <script src="https://get.goXTK.com/xtk_edge.js"></script>
 
-    <script>
+    </head>
+
+    <body>    
+        <script>
       window.onload = function () {
         const r = new X.renderer3D();
         r.init();
 
-        const SIZE = 5;
-        const GAP  = 2;
+        const SIZE = 5, GAP = 2;
 
         for (let z = -5; z < 6; z++) {
           for (let y = -5; y < 6; y++) {
             for (let x = -5; x < 6; x++) {
-              const new_cube = new X.cube();
-              new_cube.transform.translateX((SIZE + GAP) * x);
-              new_cube.transform.translateY((SIZE + GAP) * y);
-              new_cube.transform.translateZ((SIZE + GAP) * z);
-              r.add(new_cube);
+              const cube = new X.cube();
+              cube.transform.translateX((SIZE + GAP) * x);
+              cube.transform.translateY((SIZE + GAP) * y);
+              cube.transform.translateZ((SIZE + GAP) * z);
+              r.add(cube);
             }
           }
         }
-        r.camera.position = [0, 0, 300;]
+
+        r.camera.position = [0, 0, 300];  // Part 3
         r.render();
 
-        // (optional) hover to rotate the cube under the cursor
+        // optional: hover-rotate
         r.interactor.onMouseMove = function (event) {
-          const cubeid = r.pick(event.offsetX, event.offsetY);
-          if (cubeid) {
-            r.get(cubeid).transform.rotateX(10);
-          }
+          const id = r.pick(event.offsetX, event.offsetY);
+          if (id) r.get(id).transform.rotateX(10);
         };
       };
     </script>
