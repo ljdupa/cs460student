@@ -15,14 +15,19 @@
 
     <body>    
     <script>
-      let SELECTED_CUBE = null; 
-      let SPIN = false;
-        
-      window.onload = function () {
-        const r = new X.renderer3D();
-        r.init();
+    let SELECTED_CUBE = null;
+    let SPIN = false;
 
-        const SIZE = 5, GAP = 2;
+    // 1) declare r in the outer scope (global)
+    let r;
+
+    window.onload = function () {
+    // 2) assign to the global r (not const/let here)
+      r = new X.renderer3D();
+      r.init();
+
+      const SIZE = 5, GAP = 2;
+
 
         for (let z = -5; z < 6; z++) {
           for (let y = -5; y < 6; y++) {
