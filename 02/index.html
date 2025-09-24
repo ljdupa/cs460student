@@ -13,7 +13,9 @@
 
     <body>    
     <script>
-      let SELECTED_CUBE = null;  
+      let SELECTED_CUBE = null; 
+      let SPIN = false;
+        
       window.onload = function () {
         const r = new X.renderer3D();
         r.init();
@@ -33,9 +35,22 @@
         }
 
         window.onkeypress = function (e){
-            if(!SELECTED_CUBE) return;
             const k = e.key.toLowerCase();
 
+            if (k === 'b'){
+                SPIN = !SPIN;
+                return;
+            }     
+            if (k === 'o' && typeof download === 'function') {
+            download();
+            return;
+          }
+          if (k === 'l' && typeof upload === 'function') {
+            upload("scene.json");
+            return;
+          }
+            if (!SELECTED_CUBE) return;
+            
             if (k === 'q') {
             SELECTED_CUBE.visible = false;
           } else if (k === 'w') {
@@ -46,13 +61,9 @@
             SPIN = !SPIN;     
           }
         };
+          
         r.camera.position = [0, 0, 300];  
         r.render();
-
-          let SPIN = false;
-r.onRender = function () { if (SPIN) r.camera.rotate([1, 0]); };
-
-        
 
         r.interactor.onMouseMove = function (event) {
           const id = r.pick(event.offsetX, event.offsetY);
