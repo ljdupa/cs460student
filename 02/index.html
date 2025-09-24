@@ -36,6 +36,29 @@
           }
         }
 
+        window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  console.log('[key]', k);
+
+  if (k === 'o') {
+    if (typeof window.download === 'function') {
+      console.log('Downloading scene.json …');
+      window.download();
+    } else {
+      console.error('download() missing!');
+    }
+  }
+
+  if (k === 'l') {
+    if (typeof window.upload === 'function') {
+      console.log('Uploading scene.json …');
+      window.upload('scene.json');
+    } else {
+      console.error('upload() missing!');
+    }
+  }
+});
+
         window.onkeypress = function (e) {
             const k = e.key.toLowerCase();
 
