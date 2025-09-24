@@ -49,6 +49,9 @@
         r.camera.position = [0, 0, 300];  
         r.render();
 
+          let SPIN = false;
+r.onRender = function () { if (SPIN) r.camera.rotate([1, 0]); };
+
         
 
         r.interactor.onMouseMove = function (event) {
