@@ -6,10 +6,10 @@
         margin: 0;
         padding: 0;
         height: 100%;
-        overflow: hidden !important;
+        overflow: hidden !important;  
       }
     </style>
-
+    
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
     <script type="importmap">
@@ -24,7 +24,14 @@
     <script type="module">
 
       import * as THREE from 'three';
-      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';      
+
+        let LASTOBJ = null;
+        let DRAGGING = false;
+        const HOTPINK = 0xff69b4;
+        const GREEN = 0x7CFC00;
+        let FLICKER = false;
+        let WIREFRAME = false;
 
       var renderer, controls, scene, camera;
 
@@ -48,33 +55,62 @@
 
 
 
-        renderer.domElement.onclick = function( e ){
+        function pickOnPlane(e) {
+            const ndc = new THREE.Vector2(
+                (e.clientX / window.innerWidth) * 2 - 1,
+                -(e.clientY / window.innerHeight) * 2 + 1
+            );
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera(ndc, camera);
+            const hits = ray.intersectObject(invisible_plane);
+            return (hits && hits[0]) ? hits[0].point : null;
+        }
 
-            console.log('Yay! We clicked!');
+        // places hotpink torus and scales
+        renderer.domElement.onmousedown = function (e) {
+            if (!e.shiftKey) return;
+            controls.enabled = false;
 
-            var pixel_coords = new THREE.Vector2( e.clientX, e.clientY );
+            const p = pickOnPlane(e);
+            if (!p) return;
 
-            console.log('Pixel coords', pixel_coords);
+            const g = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const m = new THREE.MeshStandardMaterial({ color: HOTPINK, side: THREE.DoubleSide }); // hotpink
+            const torus = new THREE.Mesh(g, m);
+            torus.position.copy(p);
+            scene.add(torus);
+            torus.userData.isTorus = true;
 
-            var vp_coords = new THREE.Vector2( 
-                        ( pixel_coords.x / window.innerWidth ) * 2 - 1,  //X
-                        -( pixel_coords.y / window.innerHeight ) * 2 + 1) // Y
+            LASTOBJ = torus;
+            DRAGGING = true;
+        };
 
-            console.log('Viewport coords', vp_coords);
+        // drags to scale last torus (use Y movement)
+        renderer.domElement.onmousemove = function (e) {
+            if (!DRAGGING || !LASTOBJ) return;
 
-            var vp_coords_near = new THREE.Vector3( vp_coords.x, vp_coords.y, 0);
+            // additional scaling
+            const k = -0.01;                 // shrinks
+            const prev = LASTOBJ.scale.y;  
+            let next = prev + k * e.movementY;
 
+            if (Math.abs(next) < 0.0001) next = (prev >= 0 ? -0.0001 : 0.0001);
 
-            var raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(vp_coords_near, camera);
-            var intersects = raycaster.intersectObject(invisible_plane);
+            // If sign changed, toggle color
+            if ((prev >= 0 && next < 0) || (prev < 0 && next >= 0)) {
+                const current = LASTOBJ.material.color.getHex();
+                LASTOBJ.material.color.set( current === HOTPINK ? GREEN : HOTPINK );
+            }
 
-            console.log('Ray to Invisible Plane', intersects[0].point);
+            LASTOBJ.scale.set(next, next, next);
+        };
 
-            // update cube position
-            cube.position.set(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z);
+        // mouse up to stop scaling
+        renderer.domElement.onmouseup = function () {
+            DRAGGING = false;
+            controls.enabled = true;
+        };
 
-          };
 
 
         // setup lights
@@ -85,14 +121,13 @@
         light.position.set( 10, 100, 10 );
         scene.add( light );
 
-        // configure torus
-        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16, 2, 3); // p,q=2,3
-        const material = new THREE.MeshStandardMaterial({ color: 0xffd84a });
-        const knot = new THREE.Mesh(geometry, material);
+        // configsure torus
+        var geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16, 2, 3);
+        var material = new THREE.MeshStandardMaterial({ color: 0xffd84a });
+        var knot = new THREE.Mesh(geometry, material);
         knot.userData.isTorus = true;
+
         scene.add(knot);
-
-
 
         //
         // The invisible plane
@@ -114,22 +149,56 @@
         // interaction
         controls = new OrbitControls( camera, renderer.domElement );
 
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() !== 'f') return;
+            FLICKER = !FLICKER;
+
+            scene.traverse(obj => {
+                if (obj.isMesh && obj.userData.isTorus) {
+                    obj.material.transparent = true;
+                    obj.material.needsUpdate = true;
+                    if (!FLICKER) {              // reset when turning off
+                        obj.material.opacity = 1.0;
+                    }
+                }
+            });
+        });
+
+        // W toggles wireframe
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() !== 'w') return;
+            WIREFRAME = !WIREFRAME;
+
+            scene.traverse(obj => {
+                if (obj.isMesh && obj.userData.isTorus) {
+                    obj.material.wireframe = WIREFRAME;
+                    obj.material.needsUpdate = true;
+                }
+            });
+        });
+
         // call animation/rendering loop
         animate();
-
+        
       };
 
+      // flickering
       function animate() {
-
-        requestAnimationFrame( animate );
+        requestAnimationFrame(animate);
         controls.update();
-        renderer.render( scene, camera );
 
-      };
+        if (FLICKER) {
+            scene.traverse(obj => {
+                if (obj.isMesh && obj.userData.isTorus) {
+                    obj.material.transparent = true;
+                    obj.material.opacity = 0.35 + 0.65 * Math.random();
+                }
+            });
+        }
+
+        renderer.render(scene, camera);
+    }
     </script>
   </head>
   <body></body>
 </html>
-﻿
-dlj2580
-dlj2580
