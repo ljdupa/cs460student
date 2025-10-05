@@ -122,12 +122,12 @@
         scene.add( light );
 
         // configure torus
-        var geometry = new THREE.TorusGeometry(8, 3, 16, 64);
+        var geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16, 2, 3);
         var material = new THREE.MeshStandardMaterial({ color: 0xffd84a });
-        var cube = new THREE.Mesh(geometry, material);
-        cube.userData.isTorus = true;
+        var knot = new THREE.Mesh(geometry, material);
+        knot.userData.isTorus = true;
 
-        scene.add(cube);
+        scene.add(knot);
 
         //
         // The invisible plane
