@@ -56,6 +56,7 @@
     var c, gl;
     var v_shader, f_shader, shaderprogram;
     var vertices, indices, v_buffer, i_buffer;
+    var u_pointsize;
 
     window.onload = function() {
 
@@ -102,7 +103,6 @@
       gl.linkProgram( shaderprogram );
 
       gl.useProgram( shaderprogram );
-      var u_pointsize;
       u_pointsize = gl.getUniformLocation(shaderprogram, 'u_pointsize');
 
 
@@ -185,16 +185,6 @@
       for( var r = 0; r < all_fish.length; r++ ) {
         const [vbuf, ibuf, eye_vbuf, color, offset, scale, dir] = all_fish[r];
 
-        // current_buffers is a list of [v_buffer, i_buffer]-pairs
-        var current_buffers = all_fish[r];
-        var current_v_buffer = current_buffers[0];
-        var current_i_buffer = current_buffers[1];
-        var current_eye_v_buffer = current_buffers[2];
-        var current_offset = current_buffers[3];
-        var current_color = current_buffers[4];
-        var current_scale = current_buffers[5];
-        var current_direction = current_buffers[6];
-
         // ... other stuff
 
         // update offsets
@@ -235,35 +225,26 @@
 
         gl.enableVertexAttribArray ( a_position );
 
-        // find the uniform in the shader source
-        const u_offset = gl.getUniformLocation( shaderprogram, 'u_offset' );
+        const u_offset = gl.getUniformLocation(shaderprogram, 'u_offset');
+        const u_color  = gl.getUniformLocation(shaderprogram, 'u_color');
+        const u_scale  = gl.getUniformLocation(shaderprogram, 'u_scale');
+        const u_dir    = gl.getUniformLocation(shaderprogram, 'u_dir');
 
-        gl.uniform3fv( u_offset, current_offset)
-
-        const u_color = gl.getUniformLocation( shaderprogram, 'u_color' );
-        
-        gl.uniform4fv( u_color, current_color );
-
-        gl.uniform3v( u,scale, scale);
-
-        gl.uniform1f (u_dir, dir);
-        //************************************************************//
-        //
-        // DRAW!
-        //
-
+        gl.uniform3fv(u_offset, offset);
+        gl.uniform3fv(u_scale,  scale);
+        gl.uniform1f (u_dir,    dir);  
 
         // gl.drawArrays( gl.TRIANGLES, 0, 6 );
 
         gl.drawElements( gl.TRIANGLES, 15, gl.UNSIGNED_BYTE, 0);
         gl.uniform4fv(u_color, new Float32Array([0, 0, 0, 0.5]));
         const current_scale = Math.max(scale[0], scale[1]);
-        gl.uniform1f(u_[pointsize, current_scale * 20.0]);
+        gl.uniform1f(u_pointsize, current_scale * 20.0);
 
-        gl.enableVertexAttribArray(a_position);
         gl.bindBuffer(gl.ARRAY_BUFFER, eye_vbuf);
         gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(a_position);
+        gl.drawArrays(gl.POINTS, 0, 1);
 
         gl.drawArrays(gl.POINTS, 0, 1); 
 
