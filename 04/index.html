@@ -175,6 +175,25 @@ var step_x = 0.01;
 var step_y = 0.01;
 var direction = -1;
 
+for (let i = 0; i < 100; i++) {
+  const random_color  = new Float32Array([
+    Math.random(), Math.random(), Math.random(), 1.0
+  ]);
+
+  // keep them mostly on-screen
+  const random_offset = new Float32Array([
+    (Math.random() * 1.8) - 0.9, // x in [-0.9, 0.9]
+    (Math.random() * 1.8) - 0.9, // y in [-0.9, 0.9]
+    0.0
+  ]);
+
+  const s = Math.random() * 0.3 + 0.05;          // size in (0.05 .. 0.35)
+  const random_scale   = new Float32Array([s, s, 1.0]);
+  const random_dir     = Math.random() < 0.5 ? -1.0 : 1.0;
+
+  all_fish.push( createFish(random_offset, random_color, random_scale, random_dir) );
+}
+
 // draw every frame
 function animate() {
   requestAnimationFrame(animate);
