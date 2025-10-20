@@ -57,7 +57,7 @@
     var c, gl;
     var v_shader, f_shader, shaderprogram;
     var vertices, indices, v_buffer, i_buffer;
-    var u_pointsize;
+    var u_pointsize, u_transform;
 
     window.onload = function() {
 
@@ -104,7 +104,7 @@
       gl.linkProgram( shaderprogram );
 
       gl.useProgram( shaderprogram );
-      const u_transform = gl.getUniformLocation(shaderprogram, 'u_transform');
+      u_transform = gl.getUniformLocation(shaderprogram, 'u_transform');
       u_pointsize = gl.getUniformLocation(shaderprogram, 'u_pointsize');
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -223,12 +223,18 @@ function animate() {
     gl.enableVertexAttribArray(a_position);
 
     // uniforms
-    const u_transform = gl.getUniformLocation(shaderprogram, 'u_transform');
     const u_color  = gl.getUniformLocation(shaderprogram, 'u_color');
     const u_scale  = gl.getUniformLocation(shaderprogram, 'u_scale');
     const u_dir    = gl.getUniformLocation(shaderprogram, 'u_dir');
 
-    gl.uniform3fv(u_transform, transform);
+    const transform = new Float32Array([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    offset[0], offset[1], 0, 1
+    ]);
+    gl.uniformMatrix4fv(u_transform, false, transform);
+    
     gl.uniform4fv(u_color,  color);
     gl.uniform3fv(u_scale,  scale);
     gl.uniform1f (u_dir,    dir);
