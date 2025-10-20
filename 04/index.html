@@ -104,6 +104,8 @@
 
       gl.useProgram( shaderprogram );
       u_pointsize = gl.getUniformLocation(shaderprogram, 'u_pointsize');
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 
       // create multiple fish
@@ -169,15 +171,21 @@
 
     };
 
-    var step_x = .01;
-    var step_y = .01;
-    var direction = -1;
+var step_x = 0.01;
+var step_y = 0.01;
+var direction = -1;
 
-for (var r = 0; r < all_fish.length; r++) {
-    // Use the destructured names you already created
+// draw every frame
+function animate() {
+  requestAnimationFrame(animate);
+
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  for (var r = 0; r < all_fish.length; r++) {
     const [vbuf, ibuf, eye_vbuf, color, offset, scale, dir] = all_fish[r];
 
-    // --- bounce update (use 'offset', not current_offset) ---
+    // bounce update
     if (offset[0] <= -1.0) direction = 1;
     else if (offset[0] >= 1.0) direction = -1;
     offset[0] += direction * step_x;
@@ -186,7 +194,7 @@ for (var r = 0; r < all_fish.length; r++) {
     else if (offset[1] >= 1.0) direction = -1;
     offset[1] += direction * step_y;
 
-    // --- bind geometry ---
+    // bind geometry
     gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibuf);
 
@@ -194,21 +202,21 @@ for (var r = 0; r < all_fish.length; r++) {
     gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(a_position);
 
-    // --- uniforms ---
+    // uniforms
     const u_offset = gl.getUniformLocation(shaderprogram, 'u_offset');
     const u_color  = gl.getUniformLocation(shaderprogram, 'u_color');
     const u_scale  = gl.getUniformLocation(shaderprogram, 'u_scale');
     const u_dir    = gl.getUniformLocation(shaderprogram, 'u_dir');
 
     gl.uniform3fv(u_offset, offset);
-    gl.uniform4fv(u_color,  color);     // <-- body color (was missing)
+    gl.uniform4fv(u_color,  color);
     gl.uniform3fv(u_scale,  scale);
     gl.uniform1f (u_dir,    dir);
 
-    // --- draw body ---
+    // draw body (5 triangles = 15 indices)
     gl.drawElements(gl.TRIANGLES, 15, gl.UNSIGNED_BYTE, 0);
 
-    // --- draw eye as a point ---
+    // draw eye (POINT)
     gl.uniform4fv(u_color, new Float32Array([0, 0, 0, 0.5])); // semi-transparent black
     const s = Math.max(scale[0], scale[1]);
     gl.uniform1f(u_pointsize, s * 20.0);
@@ -216,9 +224,10 @@ for (var r = 0; r < all_fish.length; r++) {
     gl.bindBuffer(gl.ARRAY_BUFFER, eye_vbuf);
     gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(a_position);
-
     gl.drawArrays(gl.POINTS, 0, 1);
   }
+}
+
 
 
   </script>
