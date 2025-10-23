@@ -219,21 +219,27 @@ function animate() {
     gl.enableVertexAttribArray(a_position);
 
     // uniforms
-    const u_color  = gl.getUniformLocation(shaderprogram, 'u_color');
-    const u_dir    = gl.getUniformLocation(shaderprogram, 'u_dir');
+    const u_color = gl.getUniformLocation(shaderprogram, 'u_color');
+    const u_dir   = gl.getUniformLocation(shaderprogram, 'u_dir');
 
+    // --- rotation (0..10 degrees) + per-fish scale folded into the matrix ---
+    const theta = (Math.random() * 10.0) * Math.PI / 180.0;  // small spin each frame
+    const c = Math.cos(theta), s = Math.sin(theta);
+
+    const sx = scale[0], sy = scale[1], sz = scale[2];       // this fish's size
+
+    // Column-major mat4: Rz(theta) * S(sx,sy,sz) with translation by offset
     const transform = new Float32Array([
       c*sx,  s*sx, 0, 0,
      -s*sy,  c*sy, 0, 0,
       0,     0,    1*sz, 0,
       offset[0], offset[1], 0, 1
     ]);
-
-
     gl.uniformMatrix4fv(u_transform, false, transform);
 
-    gl.uniform4fv(u_color,  color);
-    gl.uniform1f (u_dir,    dir);
+    // remaining uniforms
+    gl.uniform4fv(u_color, color);
+    gl.uniform1f(u_dir,   dir);
 
     // draw body (5 triangles = 15 indices)
     gl.drawElements(gl.TRIANGLES, 15, gl.UNSIGNED_BYTE, 0);
