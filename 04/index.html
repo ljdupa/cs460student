@@ -136,6 +136,21 @@
       animate();
 
     };
+    // Convert ~15% of the small fish into trash (skip the big red one at index 0)
+for (let i = 1; i < all_fish.length; i++) {
+  if (Math.random() < 0.15) {
+    const [, , , , offset, scale, dir] = all_fish[i];
+    // dingy plastic/metal look with decent alpha
+    const trashColor = new Float32Array([
+      0.7 + Math.random()*0.2,  // a bit off-white/gray
+      0.7 + Math.random()*0.2,
+      0.6 + Math.random()*0.2,
+      0.8
+    ]);
+    all_fish[i] = createTrash(offset, trashColor, scale, dir);
+  }
+}
+
 
 
     function createFish(offset, color, scale = new Float32Array([1, 1, 1]), direction = 1.0) {
@@ -266,6 +281,43 @@ function animate() {
     gl.enableVertexAttribArray(a_position);
     gl.drawArrays(gl.POINTS, 0, 1);
   }
+}
+
+function createTrash(offset, color, scale = new Float32Array([1,1,1]), direction = 1.0) {
+  // a small “bag/can” silhouette (two quads + a tiny notch) in NDC-ish local space
+  const vertices = new Float32Array([
+    // body quad
+    -0.15, -0.20, 0.0,
+     0.15, -0.20, 0.0,
+     0.15,  0.20, 0.0,
+    -0.15,  0.20, 0.0,
+
+    // top “crumple” / tab (small triangle on top-left)
+    -0.10,  0.20, 0.0,
+    -0.20,  0.28, 0.0,
+    -0.02,  0.26, 0.0,
+  ]);
+
+  const indices = new Uint8Array([
+    // body (two triangles)
+    0, 1, 2,
+    0, 2, 3,
+    // tab
+    4, 5, 6,
+  ]);
+
+  const v_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, v_buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+  const i_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, i_buffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+  // NOTE: eye_v_buffer = null marks this as “trash”
+  return [v_buffer, i_buffer, null, color, offset, scale, direction];
 }
 
 
