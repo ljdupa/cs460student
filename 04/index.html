@@ -221,13 +221,16 @@ function animate() {
   for (var r = 0; r < all_fish.length; r++) {
     const [vbuf, ibuf, eye_vbuf, color, offset, scale, dir] = all_fish[r];
 
+    const speed = 0.01;                      // tweak to taste (can scale by size)
+    offset[0] += speed * dir;                // <-- THIS was missing
+    offset[1] += 0.1 * (Math.random() - 0
+
     // after: offset[0] += speed * dir;  offset[1] += 0.1*(Math.random()-0.5);
 
     // size-aware horizontal wrap (approx half-width ≈ 0.5 * scale.x)
     const halfW = 0.5 * scale[0];
     const rightEdge = 1.0 + halfW;
     const leftEdge  = -1.0 - halfW;
-
     if (dir > 0 && offset[0] >= rightEdge)  offset[0] = leftEdge;
     if (dir < 0 && offset[0] <= leftEdge)   offset[0] = rightEdge;
 
