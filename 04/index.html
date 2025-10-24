@@ -225,16 +225,17 @@ function animate() {
 
     // --- rotation (0..10 degrees) + per-fish scale folded into the matrix ---
     const theta = (Math.random() * 10.0) * Math.PI / 180.0;  // small spin each frame
-    const cosT = Math.cos(theta), sinT = Math.sin(theta);
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
 
     const sx = scale[0], sy = scale[1], sz = scale[2];       // this fish's size
 
     // Column-major mat4: Rz(theta) * S(sx,sy,sz) with translation by offset
     const transform = new Float32Array([
-      c*sx,  s*sx, 0, 0,
-     -s*sy,  c*sy, 0, 0,
-      0,     0,    1*sz, 0,
-      offset[0], offset[1], 0, 1
+        cosT*sx,  sinT*sx, 0, 0,
+        -sinT*sy,  cosT*sy, 0, 0,
+        0,        0,       1*sz, 0,
+        offset[0], offset[1], 0, 1
     ]);
     gl.uniformMatrix4fv(u_transform, false, transform);
 
