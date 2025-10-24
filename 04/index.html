@@ -246,12 +246,14 @@ function animate() {
     const cosT = Math.cos(theta), sinT = Math.sin(theta);
     const sx = scale[0], sy = scale[1], sz = scale[2];  
 
+
+
     // Column-major mat4: Rz(theta) * S(sx,sy,sz) with translation by offset
     const transform = new Float32Array([
-        cosT*sx,  sinT*sx, 0, 0,
-       -sinT*sy, cosT*sy, 0, 0,
+        cT*sx,  sT*sx, 0, 0,
+       -sT*sy, cT*sy, 0, 0,
         0,        0,       1*sz, 0,
-        offset[0], offset[1], 0, 1
+        offset[0] + wobbleX, offset[1] + wobbleY, 0, 1
     ]);
     gl.uniformMatrix4fv(u_transform, false, transform);
 
@@ -264,6 +266,10 @@ function animate() {
         const t = performance.now() * 0.002;         // seconds
         const alpha = 0.6 + 0.4 * Math.sin(t * 2.0 + r); // 0.2..1.0, phase per fish
         current_color = new Float32Array([color[0], color[1], color[2], alpha]);
+
+        if (!eye_vbuf) {
+            current_color[3] = Math.min(1.0, current_color[3] + 0.15);
+        }
     }
 
     // send color for the body this frame
@@ -283,8 +289,17 @@ function animate() {
         gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(a_position);
         gl.drawArrays(gl.POINTS, 0, 1);
-    }
+        let localTheta = theta;
 
+        let wobbleX = 0, wobbleY = 0;
+        if (!eye_vbuf) {              // this is trash
+            const tt = performance.now() * 0.001 + r;
+            localTheta = 0.3 * Math.sin(tt * 0.7); // slow, small spin
+            wobbleX = 0.02 * Math.sin(tt * 1.3);   // tiny drift
+            wobbleY = 0.02 * Math.cos(tt * 1.1);
+        }
+        const cT = Math.cos(localTheta), sT = Math.sin(localTheta);
+    }
   }
 }
 
