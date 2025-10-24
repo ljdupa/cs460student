@@ -5,7 +5,7 @@
     <title>Default WebGL!</title>
     <style>
       html, body { 
-        background-color:#000;
+        background: url('https://cs460.org/assignments/04/bg.jpg') center/cover no-repeat fixed;
         margin: 0;
         padding: 0;
         height: 100%;
@@ -15,12 +15,14 @@
       #c {
         width: 100%;
         height: 100%;
+        background: transparent;
+        display: block;
       }
     </style>
   </head>
   <script type="text/javascript" src="https://cs460.org/js/glmatrix.js"></script>
   
-  <script id="vertexshader" type="glsl">
+  <script id="vertexshader" type="x-shader/x-vertex">
     attribute vec3 a_position;
 
     uniform float u_dir;
@@ -36,7 +38,7 @@
     }
     </script>
   
-  <script id="fragmentshader" type="glsl">
+  <script id="fragmentshader" type="x-shader/x-fragment">
     precision mediump float;
 
     uniform vec4 u_color;
@@ -50,10 +52,8 @@
   
   <script>
 
-    var c, gl;
-    var v_shader, f_shader, shaderprogram;
-    var vertices, indices, v_buffer, i_buffer;
-    var u_pointsize, u_transform;
+    let c, gl, shaderprogram, u_pointsize, u_transform;
+    let all_fish = [];
 
     window.onload = function() {
 
@@ -66,6 +66,7 @@
       c.height = window.innerHeight;
 
       gl = c.getContext( 'webgl' ); // setup GL context
+      if (!gl) {alert ('WebGL not available'); return; }
       gl.viewport(0, 0, c.width, c.height );
 
 
@@ -193,7 +194,7 @@ var direction = -1;
 function animate() {
   requestAnimationFrame(animate);
 
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.0, 0.0, 0.0, 0.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.enable(gl.BLEND);
   gl.blendEquation(gl.FUNC_ADD);
@@ -224,23 +225,37 @@ function animate() {
     const u_dir   = gl.getUniformLocation(shaderprogram, 'u_dir');
 
     // --- rotation (0..10 degrees) + per-fish scale folded into the matrix ---
-    const theta = (Math.random() * 10.0) * Math.PI / 180.0;  // small spin each frame
-    const cosT = Math.cos(theta);
-    const sinT = Math.sin(theta);
-
-    const sx = scale[0], sy = scale[1], sz = scale[2];       // this fish's size
+    const theta = (Math.random() * 10.0) * Math.PI / 180.0;
+    const cosT = Math.cos(theta), sinT = Math.sin(theta);
+    const sx = scale[0], sy = scale[1], sz = scale[2];  
 
     // Column-major mat4: Rz(theta) * S(sx,sy,sz) with translation by offset
     const transform = new Float32Array([
         cosT*sx,  sinT*sx, 0, 0,
-        -sinT*sy,  cosT*sy, 0, 0,
+       -sinT*sy, cosT*sy, 0, 0,
         0,        0,       1*sz, 0,
         offset[0], offset[1], 0, 1
     ]);
     gl.uniformMatrix4fv(u_transform, false, transform);
 
-    // remaining uniforms
-    gl.uniform4fv(u_color, color);
+    let current_color;
+
+    if (r === 0) {
+  // Keep the first (big) fish red with some alpha
+        current_color = new Float32Array([1.0, 0.0, 0.0, 0.7]);
+    } else {
+    const t = performance.now() * 0.001;                     // seconds
+    const a = 0.6 + 0.4 * Math.sin(t * 2.0);               // 0.2 .. 1.0 alpha pulse
+    current_color = new Float32Array([
+        0.3 + 0.2 * Math.sin(t + 0.0),                       // R (subtle)
+        0.6 + 0.2 * Math.sin(t + 2.0),                       // G
+        0.9 + 0.1 * Math.sin(t + 4.0),                       // B (mostly blue)
+        a
+    ]);
+    }
+
+    // send color for the body this frame
+    gl.uniform4fv(u_color, current_color);
     gl.uniform1f(u_dir,   dir);
 
     // draw body (5 triangles = 15 indices)
