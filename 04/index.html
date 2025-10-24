@@ -268,7 +268,7 @@ function animate() {
         current_color = new Float32Array([color[0], color[1], color[2], alpha]);
 
         if (!eye_vbuf) {
-            current_color[3] = Math.min(1.0, current_color[3] + 0.15);
+            current_color[3] = Math.min(1.0, current_color[3])
         }
     }
 
