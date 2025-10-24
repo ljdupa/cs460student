@@ -112,35 +112,33 @@
       all_fish = [];
       all_fish.push(
         createFish(new Float32Array([0,0,0]),
-           new Float32Array([1, 0, 0, 0.8]),  // 0.8 alpha
+           new Float32Array([1, 0, 0, 0.8]),
            new Float32Array([1,1,1]),
            1.0));
       for (let i = 0; i < 100; i++) {
   const random_color = new Float32Array([
-  Math.random(), Math.random(), Math.random(), 0.6 + Math.random()*0.25 // 0.6..0.85 alpha
+  Math.random(), Math.random(), Math.random(), 0.6 + Math.random()*0.25
 ]);
 
-  // keep them mostly on-screen
+
   const random_offset = new Float32Array([
-    (Math.random() * 1.8) - 0.9, // x in [-0.9, 0.9]
-    (Math.random() * 1.8) - 0.9, // y in [-0.9, 0.9]
+    (Math.random() * 1.8) - 0.9,
+    (Math.random() * 1.8) - 0.9,
     0.0
   ]);
 
-  const s = Math.random() * 0.3 + 0.05;          // size in (0.05 .. 0.35)
+  const s = Math.random() * 0.3 + 0.05;
   const random_scale   = new Float32Array([s, s, 1.0]);
   const random_dir     = Math.random() < 0.5 ? -1.0 : 1.0;
 
   all_fish.push( createFish(random_offset, random_color, random_scale, random_dir) );
 }
 
-    // Convert ~15% of the small fish into trash (skip the big red one at index 0)
 for (let i = 1; i < all_fish.length; i++) {
   if (Math.random() < 0.15) {
     const [, , , , offset, scale, dir] = all_fish[i];
-    // dingy plastic/metal look with decent alpha
     const trashColor = new Float32Array([
-      0.7 + Math.random()*0.2,  // a bit off-white/gray
+      0.7 + Math.random()*0.2,
       0.7 + Math.random()*0.2,
       0.6 + Math.random()*0.2,
       0.8
@@ -207,7 +205,6 @@ var step_y = 0.01;
 var direction = -1;
 
 
-// draw every frame
 function animate() {
   requestAnimationFrame(animate);
 
@@ -221,31 +218,26 @@ function animate() {
 for (let r = 0; r < all_fish.length; r++) {
   const [vbuf, ibuf, eye_vbuf, color, offset, scale, dir] = all_fish[r];
 
-  // --- swim update ---
   const speed = 0.01;
   offset[0] += speed * dir;
   offset[1] += 0.1 * (Math.random() - 0.5);
 
-  // size-aware wrap
   const halfW = 0.5 * scale[0];
   const rightEdge = 1.0 + halfW;
   const leftEdge  = -1.0 - halfW;
   if (dir > 0 && offset[0] >= rightEdge)  offset[0] = leftEdge;
   if (dir < 0 && offset[0] <= leftEdge)   offset[0] = rightEdge;
 
-  // gentle vertical wrap
   const topEdge =  1.05, botEdge = -1.05;
   if (offset[1] >  topEdge) offset[1] = botEdge;
   if (offset[1] <  botEdge) offset[1] = topEdge;
 
-  // --- bind geometry ---
   gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibuf);
   const a_position = gl.getAttribLocation(shaderprogram, 'a_position');
   gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_position);
 
-  // --- transform (rotation + wobble for trash) ---
   const theta = (Math.random() * 10.0) * Math.PI / 180.0;
   let localTheta = theta, wobbleX = 0.0, wobbleY = 0.0;
   if (!eye_vbuf) {
@@ -264,7 +256,6 @@ for (let r = 0; r < all_fish.length; r++) {
   ]);
   gl.uniformMatrix4fv(u_transform, false, transform);
 
-  // --- color ---
   const u_color = gl.getUniformLocation(shaderprogram, 'u_color');
   const u_dir   = gl.getUniformLocation(shaderprogram, 'u_dir');
   let current_color;
@@ -277,10 +268,8 @@ for (let r = 0; r < all_fish.length; r++) {
   gl.uniform4fv(u_color, current_color);
   gl.uniform1f(u_dir, dir);
 
-  // --- draw body ---
   gl.drawElements(gl.TRIANGLES, 15, gl.UNSIGNED_BYTE, 0);
 
-  // --- draw eye (fish only) ---
   if (eye_vbuf) {
     gl.uniform4fv(u_color, new Float32Array([0,0,0,0.5]));
     const pointScale = Math.max(scale[0], scale[1]);
@@ -295,25 +284,20 @@ for (let r = 0; r < all_fish.length; r++) {
 
 
 function createTrash(offset, color, scale = new Float32Array([1,1,1]), direction = 1.0) {
-  // a small “bag/can” silhouette (two quads + a tiny notch) in NDC-ish local space
   const vertices = new Float32Array([
-    // body quad
     -0.15, -0.20, 0.0,
      0.15, -0.20, 0.0,
      0.15,  0.20, 0.0,
     -0.15,  0.20, 0.0,
 
-    // top “crumple” / tab (small triangle on top-left)
     -0.10,  0.20, 0.0,
     -0.20,  0.28, 0.0,
     -0.02,  0.26, 0.0,
   ]);
 
   const indices = new Uint8Array([
-    // body (two triangles)
     0, 1, 2,
     0, 2, 3,
-    // tab
     4, 5, 6,
   ]);
 
@@ -327,7 +311,6 @@ function createTrash(offset, color, scale = new Float32Array([1,1,1]), direction
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-  // NOTE: eye_v_buffer = null marks this as “trash”
   return [v_buffer, i_buffer, null, color, offset, scale, direction];
   }
 
