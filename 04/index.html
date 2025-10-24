@@ -221,13 +221,14 @@ function animate() {
   for (var r = 0; r < all_fish.length; r++) {
     const [vbuf, ibuf, eye_vbuf, color, offset, scale, dir] = all_fish[r];
 
-    // bounce update
-    offset[0] += 0.01;                               // steady rightward swim
-    offset[1] += 0.1 * (Math.random() - 0.5);        // small vertical wiggle
+    // swim update — move in the direction the fish is facing
+    const speed = 0.01;
+    offset[0] += speed * dir;                      // tie motion to facing
+    offset[1] += 0.1 * (Math.random() - 0.5);     // vertical wiggle
 
-    if (offset[0] >= 1.0) {                          // wrap to the left
-    offset[0] = -1.0;
-}
+    // screen wrap that respects direction
+    if (dir > 0 && offset[0] >= 1.0)  offset[0] = -1.0;
+    if (dir < 0 && offset[0] <= -1.0) offset[0] =  1.0;
 
     // bind geometry
     gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
