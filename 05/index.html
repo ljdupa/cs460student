@@ -30,84 +30,56 @@
 
     window.onload = function() {
 
-      // ----------------------------
       // SCENE
-      // ----------------------------
       scene = new THREE.Scene();
 
-      // ----------------------------
-      // CAMERA
-      // ----------------------------
-      const fov = 75;
-      const aspect = window.innerWidth / window.innerHeight;
-      const near = 0.1;
-      const far = 10000;
-
-      camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-      camera.position.set(0, 80, 160);
+      // CAMERA (closer now)
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+      );
+      camera.position.set(0, 40, 80);   // <- closer to the model
       camera.lookAt(0, 20, 0);
 
-      // ----------------------------
       // RENDERER
-      // ----------------------------
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
       document.body.appendChild(renderer.domElement);
 
-      // ----------------------------
       // LIGHTS
-      // ----------------------------
-      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambient);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
       const dir = new THREE.DirectionalLight(0xffffff, 2.0);
       dir.position.set(5, 10, 7);
       scene.add(dir);
 
-      // ----------------------------
       // ORBIT CONTROLS
-      // ----------------------------
       controls = new OrbitControls(camera, renderer.domElement);
       controls.target.set(0, 20, 0);
       controls.update();
 
-      // ----------------------------
       // LOADERS
-      // ----------------------------
       const loader = new GLTFLoader();
 
-      // --------------------------------------
-      // LOAD ORIGINAL POLYCAM MESH (monster2.glb)
-      // --------------------------------------
+      // ORIGINAL SCAN — scaled and centered
       loader.load("monster2.glb", function(gltf) {
-
-        const poly = gltf.scenes[0].children[0];
-
-        poly.scale.set(40, 40, 40);     // Match Blender scale
-        poly.position.set(50, 0, 0); // Move to the right
-        poly.quaternion.set(0, 0, 0, 1);
-
-        scene.add(gltf.scene);
+        const poly = gltf.scenes[0];
+        poly.scale.set(30, 30, 30);   // big
+        poly.position.set(30, 0, 0);  // right side
+        scene.add(poly);
       });
 
-      // ---------------------------------------------------------
-      // LOAD EDITED BLENDER MESH (11_18_2025.glb)
-      // ---------------------------------------------------------
+      // EDITED MODEL — same scale
       loader.load("11_18_2025.glb", function(gltf) {
-
-        const edited = gltf.scenes[0].children[0];
-
-        edited.scale.set(3, 3, 3);      // Same scale as PolyCam
-        edited.position.set(-50, 0, 0); // Move to the left
-        edited.quaternion.set(0, 0, 0, 1);
-
-        scene.add(gltf.scene);
+        const edited = gltf.scenes[0];
+        edited.scale.set(30, 30, 30);  // big
+        edited.position.set(-30, 0, 0); // left side
+        scene.add(edited);
       });
 
-      // ----------------------------
-      // ANIMATE LOOP
-      // ----------------------------
       animate();
     };
 
@@ -116,7 +88,6 @@
       controls.update();
       renderer.render(scene, camera);
     }
-
   </script>
 </head>
 <body></body>
