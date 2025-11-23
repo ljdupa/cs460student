@@ -42,6 +42,7 @@
       const far = 10000;     // required by instructions
       camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
       camera.position.set(0, 10, 0);  // recommended for PolyCam meshes
+      camera.lookAt(0, 0, 0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -71,7 +72,7 @@
       // --------------------------------------
       // LOAD ORIGINAL POLYCAM MESH (monster.glb)
       // --------------------------------------
-      loader.load("monster.glb", function(gltf) {
+      loader.load("monster.glb", function( gltf ) {
 
         const poly = gltf.scenes[0].children[0];
 
