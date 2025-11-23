@@ -1,1 +1,126 @@
+<html>
+<head>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+  </style>
 
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@latest/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    let renderer, scene, camera, controls;
+
+    window.onload = function() {
+
+      // ----------------------------
+      // SCENE + CAMERA + RENDERER
+      // ----------------------------
+      scene = new THREE.Scene();
+
+      const fov = 75;
+      const aspect = window.innerWidth / window.innerHeight;
+      const near = 0.1;
+      const far = 10000;     // required by instructions
+      camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 10, 0);  // recommended for PolyCam meshes
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      document.body.appendChild(renderer.domElement);
+
+      // ----------------------------
+      // LIGHTS
+      // ----------------------------
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 2.0);
+      dir.position.set(5, 10, 7);
+      scene.add(dir);
+
+      // ----------------------------
+      // CONTROLS
+      // ----------------------------
+      controls = new OrbitControls(camera, renderer.domElement);
+
+      // ----------------------------
+      // LOADERS
+      // ----------------------------
+      const loader = new GLTFLoader();
+
+      // --------------------------------------
+      // LOAD ORIGINAL POLYCAM MESH (monster.glb)
+      // --------------------------------------
+      loader.load("monster.glb", function(gltf) {
+
+        const poly = gltf.scenes[0].children[0];
+
+        // scale by factor 10 per instructions
+        poly.scale.set(10, 10, 10);
+
+        // reset quaternion to identity
+        poly.quaternion.set(0, 0, 0, 1);
+
+        // move slightly right to avoid overlapping with edited mesh
+        poly.translateX(5);
+
+        scene.add(gltf.scene);
+      });
+
+      // ---------------------------------------------------------
+      // LOAD EDITED BLENDER MESH (rename "edited.glb" accordingly)
+      // ---------------------------------------------------------
+      loader.load("monster.glb", function(gltf) {
+
+        const edited = gltf.scenes[0].children[0];
+
+        // same scale as original mesh
+        edited.scale.set(10, 10, 10);
+
+        // reset quaternion to identity (remove Blender export rotation)
+        edited.quaternion.set(0, 0, 0, 1);
+
+        // move slightly left so both appear side-by-side
+        edited.translateX(-5);
+
+        scene.add(gltf.scene);
+      });
+
+      animate();
+    };
+
+
+    // ----------------------------
+    // ANIMATION LOOP
+    // ----------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+  </script>
+
+</head>
+<body></body>
+</html>
