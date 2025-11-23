@@ -83,8 +83,6 @@
         // reset quaternion to identity
         poly.quaternion.set(0, 0, 0, 1);
 
-        // move slightly right to avoid overlapping with edited mesh
-        poly.translateX(5);
 
         scene.add(gltf.scene);
       });
@@ -103,8 +101,6 @@
         // reset quaternion to identity (remove Blender export rotation)
         edited.quaternion.set(0, 0, 0, 1);
 
-        // move slightly left so both appear side-by-side
-        edited.translateX(-5);
 
         scene.add(gltf.scene);
       });
