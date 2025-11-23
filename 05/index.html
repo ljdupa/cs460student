@@ -180,7 +180,7 @@
 // UNEDITED (left) – 11_18_2025.glb
 //
 loader.load("11_18_2025.glb", (gltf) => {
-    const mesh = gltf.scene.children[0];
+    const mesh = gltf.scene.getObjectByProperty('type', 'Mesh');
 
     mesh.scale.set(30, 30, 30);
     mesh.position.set(-40, 0, 0);
