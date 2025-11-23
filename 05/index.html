@@ -77,7 +77,8 @@
         const poly = gltf.scenes[0].children[0];
 
         // scale by factor 10 per instructions
-        poly.scale.set(10, 10, 10);
+        poly.scale.set(3, 3, 3);
+        poly.position.set(20, 0, 0);
 
         // reset quaternion to identity
         poly.quaternion.set(0, 0, 0, 1);
@@ -96,7 +97,8 @@
         const edited = gltf.scenes[0].children[0];
 
         // same scale as original mesh
-        edited.scale.set(10, 10, 10);
+        edited.scale.set(30, 30, 30);
+        edited.position.set(-20, 0, 0);
 
         // reset quaternion to identity (remove Blender export rotation)
         edited.quaternion.set(0, 0, 0, 1);
