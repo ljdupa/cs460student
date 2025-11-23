@@ -176,40 +176,45 @@
         });
       });
 
-      //
-      // UNEDITED (left) – 11_18_2025.glb
-      //
-      loader.load("11_18_2025.glb", (gltf) => {
-        const mesh = gltf.scene.children[0];
+     //
+// UNEDITED (left) – 11_18_2025.glb
+//
+loader.load("11_18_2025.glb", (gltf) => {
+    const mesh = gltf.scene.children[0];
 
-        mesh.scale.set(30, 30, 30);
-        mesh.position.set(-40, 0, 0);
+    mesh.scale.set(30, 30, 30);
+    mesh.position.set(-40, 0, 0);
 
-        scene.add(gltf.scene);
-        window['SCENE']['blender'] = mesh;
+    scene.add(gltf.scene);
+    window['SCENE']['blender'] = mesh;
 
-        // normals helper
-        const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
-        helper.visible = false;
-        scene.add(helper);
-        window['SCENE']['blender_helper'] = helper;
+    // normals helper
+    const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
+    helper.visible = false;
+    scene.add(helper);
+    window['SCENE']['blender_helper'] = helper;
 
-        //
-        // BLENDER MESH PANEL
-        //
-        const blenderui = pane.addFolder({ title: 'Blender Mesh' });
+    //
+    // BLENDER MESH PANEL  ← ***THIS WAS MISSING***
+    //
+    const blenderui = pane.addFolder({ title: 'Blender Mesh' });
 
-        blenderui.addBinding(helper, 'visible', { label: 'Show normals!' });
+    // Show Normals checkbox
+    blenderui.addBinding(helper, 'visible', { label: 'Show normals!' });
 
-        blenderui.addButton({ title: 'Change Material' })
-          .on('click', () => window['SCENE']['change_material']());
+    // MeshNormalMaterial toggle
+    blenderui.addButton({ title: 'Change Material' })
+        .on('click', () => {
+            window['SCENE']['change_material']();
+        });
 
-        blenderui.addButton({ title: 'rotate!' })
-          .on('click', () => {
+    // rotate button
+    blenderui.addButton({ title: 'rotate!' })
+        .on('click', () => {
             mesh.rotation.y += Math.PI;
             helper.update();
-          });
-      });
+        });
+});
 
       animate();
     };
