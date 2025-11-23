@@ -1,0 +1,123 @@
+<html>
+<head>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+  </style>
+
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@latest/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    let renderer, scene, camera, controls;
+
+    window.onload = function() {
+
+      // ----------------------------
+      // SCENE
+      // ----------------------------
+      scene = new THREE.Scene();
+
+      // ----------------------------
+      // CAMERA
+      // ----------------------------
+      const fov = 75;
+      const aspect = window.innerWidth / window.innerHeight;
+      const near = 0.1;
+      const far = 10000;
+
+      camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 80, 160);
+      camera.lookAt(0, 20, 0);
+
+      // ----------------------------
+      // RENDERER
+      // ----------------------------
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      document.body.appendChild(renderer.domElement);
+
+      // ----------------------------
+      // LIGHTS
+      // ----------------------------
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 2.0);
+      dir.position.set(5, 10, 7);
+      scene.add(dir);
+
+      // ----------------------------
+      // ORBIT CONTROLS
+      // ----------------------------
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 20, 0);
+      controls.update();
+
+      // ----------------------------
+      // LOADERS
+      // ----------------------------
+      const loader = new GLTFLoader();
+
+      // --------------------------------------
+      // LOAD ORIGINAL POLYCAM MESH (monster2.glb)
+      // --------------------------------------
+      loader.load("monster2.glb", function(gltf) {
+
+        const poly = gltf.scenes[0].children[0];
+
+        poly.scale.set(3, 3, 3);     // Match Blender scale
+        poly.position.set(50, 0, 0); // Move to the right
+        poly.quaternion.set(0, 0, 0, 1);
+
+        scene.add(gltf.scene);
+      });
+
+      // ---------------------------------------------------------
+      // LOAD EDITED BLENDER MESH (11_18_2025.glb)
+      // ---------------------------------------------------------
+      loader.load("11_18_2025.glb", function(gltf) {
+
+        const edited = gltf.scenes[0].children[0];
+
+        edited.scale.set(3, 3, 3);      // Same scale as PolyCam
+        edited.position.set(-50, 0, 0); // Move to the left
+        edited.quaternion.set(0, 0, 0, 1);
+
+        scene.add(gltf.scene);
+      });
+
+      // ----------------------------
+      // ANIMATE LOOP
+      // ----------------------------
+      animate();
+    };
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+  </script>
+</head>
+<body></body>
+</html>
