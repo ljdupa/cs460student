@@ -22,7 +22,6 @@
   </script>
 
   <script type="module">
-
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -32,18 +31,25 @@
     window.onload = function() {
 
       // ----------------------------
-      // SCENE + CAMERA + RENDERER
+      // SCENE
       // ----------------------------
       scene = new THREE.Scene();
 
+      // ----------------------------
+      // CAMERA
+      // ----------------------------
       const fov = 75;
       const aspect = window.innerWidth / window.innerHeight;
       const near = 0.1;
-      const far = 10000;     // required by instructions
+      const far = 10000;
+
       camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-      camera.position.set(0, 80, 160);  // recommended for PolyCam meshes
+      camera.position.set(0, 80, 160);
       camera.lookAt(0, 20, 0);
 
+      // ----------------------------
+      // RENDERER
+      // ----------------------------
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -60,9 +66,11 @@
       scene.add(dir);
 
       // ----------------------------
-      // CONTROLS
+      // ORBIT CONTROLS
       // ----------------------------
       controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 20, 0);
+      controls.update();
 
       // ----------------------------
       // LOADERS
@@ -70,48 +78,39 @@
       const loader = new GLTFLoader();
 
       // --------------------------------------
-      // LOAD ORIGINAL POLYCAM MESH (monster.glb)
+      // LOAD ORIGINAL POLYCAM MESH (monster2.glb)
       // --------------------------------------
-      loader.load("monster.glb", function( gltf ) {
+      loader.load("monster.glb", function(gltf) {
 
         const poly = gltf.scenes[0].children[0];
 
-        // scale by factor 10 per instructions
-        poly.scale.set(3, 3, 3);
-        poly.position.set(50, 0, 0);
-
-        // reset quaternion to identity
+        poly.scale.set(3, 3, 3);     // Match Blender scale
+        poly.position.set(50, 0, 0); // Move to the right
         poly.quaternion.set(0, 0, 0, 1);
-
 
         scene.add(gltf.scene);
       });
 
       // ---------------------------------------------------------
-      // LOAD EDITED BLENDER MESH (rename "edited.glb" accordingly)
+      // LOAD EDITED BLENDER MESH (11_18_2025.glb)
       // ---------------------------------------------------------
       loader.load("11_18_2025.glb", function(gltf) {
 
         const edited = gltf.scenes[0].children[0];
 
-        // same scale as original mesh
-        edited.scale.set(30, 30, 30);
-        edited.position.set(-50, 0, 300);
-
-        // reset quaternion to identity (remove Blender export rotation)
+        edited.scale.set(3, 3, 3);      // Same scale as PolyCam
+        edited.position.set(-50, 0, 0); // Move to the left
         edited.quaternion.set(0, 0, 0, 1);
-
 
         scene.add(gltf.scene);
       });
 
+      // ----------------------------
+      // ANIMATE LOOP
+      // ----------------------------
       animate();
     };
 
-
-    // ----------------------------
-    // ANIMATION LOOP
-    // ----------------------------
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
@@ -119,7 +118,6 @@
     }
 
   </script>
-
 </head>
 <body></body>
 </html>
