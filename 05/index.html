@@ -65,7 +65,7 @@
       const loader = new GLTFLoader();
 
       // ORIGINAL SCAN — scaled and centered
-      loader.load("monster2.glb", function(gltf) {
+      loader.load("11_18_2025.glb", function(gltf) {
         const poly = gltf.scenes[0];
         poly.scale.set(30, 30, 30);   // big
         poly.position.set(30, 0, 0);  // right side
@@ -73,7 +73,7 @@
       });
 
       // EDITED MODEL — same scale
-      loader.load("11_18_2025.glb", function(gltf) {
+      loader.load("monster2.glb", function(gltf) {
         const edited = gltf.scenes[0];
         edited.scale.set(30, 30, 30);  // big
         edited.position.set(-30, 0, 0); // left side
