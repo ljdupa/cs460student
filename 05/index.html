@@ -1,83 +1,187 @@
-<script type="module">
-import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+  </style>
 
-let renderer, scene, camera, controls;
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
-window.onload = function () {
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@latest/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+    }
+  }
+  </script>
 
-  scene = new THREE.Scene();
+  <script type="module">
+    // ---------------------------------------------------
+    // IMPORTS
+    // ---------------------------------------------------
+    import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-  const fov = 75;
-  const aspect = window.innerWidth / window.innerHeight;
-  const near = 0.1;
-  const far = 10000;
+    let renderer, scene, camera, controls;
+    let poly = null;
+    let edited = null;
 
-  camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.set(0, 80, 160);
-  camera.lookAt(0, 20, 0);
+    // ---------------------------------------------------
+    // REQUIRED GLOBAL OBJECT (STEP 9 & 10)
+    // ---------------------------------------------------
+    window['SCENE'] = {
+      anaglyph: false,   // anaglyph toggle
+      poly: null,        // reference to PolyCam mesh
+      edited: null,      // reference to Blender mesh
+      showNormals: false
+    };
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  document.body.appendChild(renderer.domElement);
+    // ---------------------------------------------------
+    // WINDOW LOAD
+    // ---------------------------------------------------
+    window.onload = function () {
 
-  // LIGHTS
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
+      // ---------------------------------------------------
+      // SCENE + CAMERA
+      // ---------------------------------------------------
+      scene = new THREE.Scene();
 
-  const dir = new THREE.DirectionalLight(0xffffff, 2.0);
-  dir.position.set(5, 10, 7);
-  scene.add(dir);
+      const fov = 75;
+      const aspect = window.innerWidth / window.innerHeight;
+      const near = 0.1;
+      const far = 10000;
 
-  // CONTROLS
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 20, 0);
-  controls.update();
+      camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.set(0, 80, 160);
+      camera.lookAt(0, 20, 0);
 
-  // ----------------------------
-  // TWEAKPANE UI
-  // ----------------------------
-  const pane = new Pane();
-  const sceneui = pane.addFolder({ title: 'Scene' });
+      // ---------------------------------------------------
+      // RENDERER
+      // ---------------------------------------------------
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      document.body.appendChild(renderer.domElement);
 
-  // Sliders for light
-  sceneui.addBinding(dir.position, 'x', { min: -100, max: 100, label: 'Light X' });
-  sceneui.addBinding(dir.position, 'y', { min: -100, max: 100, label: 'Light Y' });
-  sceneui.addBinding(dir.position, 'z', { min: -100, max: 100, label: 'Light Z' });
-  sceneui.addBinding(dir, 'intensity', { min: 0, max: 10, label: 'Intensity' });
+      // ---------------------------------------------------
+      // LIGHTS
+      // ---------------------------------------------------
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
 
-  // Ambient color picker
-  sceneui.addBinding(ambient, 'color', {
-    view: 'color',
-    label: 'AmbientLight Color',
-  });
+      const dir = new THREE.DirectionalLight(0xffffff, 2.0);
+      dir.position.set(5, 10, 7);
+      scene.add(dir);
 
-  // LOADER
-  const loader = new GLTFLoader();
+      // ---------------------------------------------------
+      // CONTROLS
+      // ---------------------------------------------------
+      controls = new OrbitControls(camera, renderer.domElement);
 
-  loader.load("monster2.glb", gltf => {
-    const poly = gltf.scene.children[0];
-    poly.scale.set(40, 40, 40);
-    poly.position.set(0, 0, 0);
-    scene.add(gltf.scene);
-  });
+      // ---------------------------------------------------
+      // LOAD MODELS
+      // ---------------------------------------------------
+      const loader = new GLTFLoader();
 
-  loader.load("11_18_2025.glb", gltf => {
-    const edited = gltf.scene.children[0];
-    edited.scale.set(3, 3, 3);
-    edited.position.set(-50, 0, 0);
-    scene.add(gltf.scene);
-  });
+      // PolyCam mesh
+      loader.load("monster2.glb", gltf => {
+        poly = gltf.scene.children[0];
+        poly.scale.set(40, 40, 40);
+        poly.position.set(0, 0, 0);
+        scene.add(gltf.scene);
 
-  animate();
-};
+        window.SCENE.poly = poly;
+      });
 
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-</script>
+      // Blender mesh
+      loader.load("11_18_2025.glb", gltf => {
+        edited = gltf.scene.children[0];
+        edited.scale.set(3, 3, 3);
+        edited.position.set(-50, 0, 0);
+        scene.add(gltf.scene);
+
+        window.SCENE.edited = edited;
+      });
+
+      // ---------------------------------------------------
+      // TWEAKPANE UI (Step 8–10)
+      // ---------------------------------------------------
+      const pane = new Pane();
+
+      // SCENE PANEL
+      const sceneui = pane.addFolder({ title: 'Scene' });
+
+      // Light sliders
+      sceneui.addBinding(dir.position, 'x', { min: -100, max: 100, label: 'Light X' });
+      sceneui.addBinding(dir.position, 'y', { min: -100, max: 100, label: 'Light Y' });
+      sceneui.addBinding(dir.position, 'z', { min: -100, max: 100, label: 'Light Z' });
+      sceneui.addBinding(dir, 'intensity', { min: 0, max: 10, label: 'Intensity' });
+
+      // Ambient color
+      sceneui.addBinding(ambient, 'color', { view: 'color', label: 'AmbientLight Color' });
+
+      // Anaglyph checkbox
+      sceneui.addBinding(window.SCENE, 'anaglyph', { label: 'anaglyph' });
+
+      // ---------------------------------------------------
+      // POLYCAM MESH PANEL
+      // ---------------------------------------------------
+      const polyFolder = pane.addFolder({ title: 'PolyCam Mesh' });
+
+      // Wireframe toggle button
+      polyFolder.addButton({ title: 'wireframe' }).on('click', () => {
+        if (!poly) return;
+        poly.traverse(child => {
+          if (child.material) {
+            child.material.wireframe = !child.material.wireframe;
+          }
+        });
+      });
+
+      // Rotate button
+      polyFolder.addButton({ title: 'rotate!' }).on('click', () => {
+        if (!poly) return;
+        poly.rotation.y += Math.PI;
+      });
+
+      // ---------------------------------------------------
+      // BLENDER MESH PANEL
+      // ---------------------------------------------------
+      const blendFolder = pane.addFolder({ title: 'Blender Mesh' });
+
+      blendFolder.addBinding(window.SCENE, 'showNormals', {
+        label: 'Show normals!'
+      });
+
+      blendFolder.addButton({ title: 'rotate!' }).on('click', () => {
+        if (!edited) return;
+        edited.rotation.y += Math.PI;
+      });
+
+      // ---------------------------------------------------
+      // START ANIMATION
+      // ---------------------------------------------------
+      animate();
+    };
+
+    // ---------------------------------------------------
+    // ANIMATION LOOP
+    // ---------------------------------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+  </script>
+</head>
+<body></body>
+</html>
