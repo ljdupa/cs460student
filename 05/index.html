@@ -1,94 +1,83 @@
-<html>
-<head>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-    }
-  </style>
+<script type="module">
+import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+let renderer, scene, camera, controls;
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@latest/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
-    }
-  }
-  </script>
+window.onload = function () {
 
-  <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  scene = new THREE.Scene();
 
-    let renderer, scene, camera, controls;
+  const fov = 75;
+  const aspect = window.innerWidth / window.innerHeight;
+  const near = 0.1;
+  const far = 10000;
 
-    window.onload = function() {
+  camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  camera.position.set(0, 80, 160);
+  camera.lookAt(0, 20, 0);
 
-      // SCENE
-      scene = new THREE.Scene();
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  document.body.appendChild(renderer.domElement);
 
-      // CAMERA (closer now)
-      camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        10000
-      );
-      camera.position.set(0, 40, 80);   // <- closer to the model
-      camera.lookAt(0, 20, 0);
+  // LIGHTS
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
 
-      // RENDERER
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      document.body.appendChild(renderer.domElement);
+  const dir = new THREE.DirectionalLight(0xffffff, 2.0);
+  dir.position.set(5, 10, 7);
+  scene.add(dir);
 
-      // LIGHTS
-      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  // CONTROLS
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 20, 0);
+  controls.update();
 
-      const dir = new THREE.DirectionalLight(0xffffff, 2.0);
-      dir.position.set(5, 10, 7);
-      scene.add(dir);
+  // ----------------------------
+  // TWEAKPANE UI
+  // ----------------------------
+  const pane = new Pane();
+  const sceneui = pane.addFolder({ title: 'Scene' });
 
-      // ORBIT CONTROLS
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.target.set(0, 20, 0);
-      controls.update();
+  // Sliders for light
+  sceneui.addBinding(dir.position, 'x', { min: -100, max: 100, label: 'Light X' });
+  sceneui.addBinding(dir.position, 'y', { min: -100, max: 100, label: 'Light Y' });
+  sceneui.addBinding(dir.position, 'z', { min: -100, max: 100, label: 'Light Z' });
+  sceneui.addBinding(dir, 'intensity', { min: 0, max: 10, label: 'Intensity' });
 
-      // LOADERS
-      const loader = new GLTFLoader();
+  // Ambient color picker
+  sceneui.addBinding(ambient, 'color', {
+    view: 'color',
+    label: 'AmbientLight Color',
+  });
 
-      // ORIGINAL SCAN — scaled and centered
-      loader.load("11_18_2025.glb", function(gltf) {
-        const poly = gltf.scenes[0];
-        poly.scale.set(30, 30, 30);   // big
-        poly.position.set(30, 0, 0);  // right side
-        scene.add(poly);
-      });
+  // LOADER
+  const loader = new GLTFLoader();
 
-      // EDITED MODEL — same scale
-      loader.load("monster2.glb", function(gltf) {
-        const edited = gltf.scenes[0];
-        edited.scale.set(30, 30, 30);  // big
-        edited.position.set(-30, 0, 0); // left side
-        scene.add(edited);
-      });
+  loader.load("monster2.glb", gltf => {
+    const poly = gltf.scene.children[0];
+    poly.scale.set(40, 40, 40);
+    poly.position.set(0, 0, 0);
+    scene.add(gltf.scene);
+  });
 
-      animate();
-    };
+  loader.load("11_18_2025.glb", gltf => {
+    const edited = gltf.scene.children[0];
+    edited.scale.set(3, 3, 3);
+    edited.position.set(-50, 0, 0);
+    scene.add(gltf.scene);
+  });
 
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-  </script>
-</head>
-<body></body>
-</html>
+  animate();
+};
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+</script>
