@@ -142,22 +142,33 @@
         label: 'Ambient Color',
       });
 
-      // ----------------------------
-      // LOAD MODELS
-      // ----------------------------
-      const loader = new GLTFLoader();
+  // ----------------------------
+// LOAD MODELS
+// ----------------------------
+const loader = new GLTFLoader();
 
-// RIGHT — PolyCam mesh
-loader.load("monster2.glb", (gltf) => {
-    const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
-    if (!mesh) { console.error("Mesh missing in monster2.glb"); return; }
+// =====================================
+// LEFT — ORIGINAL POLYCAM MESH
+// =====================================
+loader.load("11_18_2025.glb", (gltf) => {
+
+    let mesh = null;
+    gltf.scene.traverse((child) => {
+        if (child.isMesh && !mesh) mesh = child;
+    });
+
+    if (!mesh) {
+        console.error("ERROR: No mesh found in 11_18_2025.glb");
+        return;
+    }
 
     mesh.scale.set(30, 30, 30);
-    mesh.position.set(40, 0, 0);
+    mesh.position.set(-40, 0, 0);
 
     scene.add(gltf.scene);
     window.SCENE.poly = mesh;
 
+    // PolyCam UI Panel
     const polyui = pane.addFolder({ title: "PolyCam Mesh" });
     const polyParams = { wireframe: false };
 
@@ -171,29 +182,35 @@ loader.load("monster2.glb", (gltf) => {
         .on("click", () => mesh.rotation.y += Math.PI);
 });
 
-// LEFT — Blender mesh
-loader.load("11_18_2025.glb", (gltf) => {
 
-    const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
-    if (!mesh) { console.error("Mesh missing in 11_18_2025.glb"); return; }
+// =====================================
+// RIGHT — BLENDER EDITED MESH
+// =====================================
+loader.load("monster2.glb", (gltf) => {
+
+    let mesh = null;
+    gltf.scene.traverse((child) => {
+        if (child.isMesh && !mesh) mesh = child;
+    });
+
+    if (!mesh) {
+        console.error("ERROR: No mesh found in monster2.glb");
+        return;
+    }
 
     mesh.scale.set(30, 30, 30);
-    mesh.position.set(-40, 0, 0);
+    mesh.position.set(40, 0, 0);
 
     scene.add(gltf.scene);
     window.SCENE.blender = mesh;
 
-    // ----------------------------------------
-    // NORMALS HELPER
-    // ----------------------------------------
+    // Normals Helper
     const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
     helper.visible = false;
     scene.add(helper);
     window.SCENE.blender_helper = helper;
 
-    // ----------------------------------------
-    // Blender Mesh UI Panel
-    // ----------------------------------------
+    // Blender Mesh UI
     const blenderui = pane.addFolder({ title: "Blender Mesh" });
 
     blenderui.addBinding(helper, "visible", { label: "Show normals!" });
@@ -207,6 +224,7 @@ loader.load("11_18_2025.glb", (gltf) => {
             helper.update();
         });
 });
+
 
 
       animate();
