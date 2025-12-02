@@ -147,31 +147,55 @@
       // ----------------------------
       const loader = new GLTFLoader();
 
-      //
-      // RIGHT CAN — EDITED (monster2.glb)
-      //
-      loader.load("monster2.glb", (gltf) => {
-        const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
-        if (!mesh) { console.error("Mesh missing in monster2.glb"); return; }
+//
+// UNEDITED (left) – monster2.glb  (Blender mesh)
+//
+loader.load("monster2.glb", (gltf) => {
 
-        mesh.scale.set(30, 30, 30);
-        mesh.position.set(40, 0, 0);
+    // PolyCam & Blender exports often contain nested groups — find the actual mesh
+    const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
 
-        scene.add(gltf.scene);
-        window.SCENE.poly = mesh;
+    if (!mesh) {
+        console.error("ERROR: No mesh found in monster2.glb");
+        return;
+    }
 
-        const polyui = pane.addFolder({ title: "PolyCam Mesh" });
-        const polyParams = { wireframe: false };
+    // SCALE + POSITION (adjust as needed)
+    mesh.scale.set(30, 30, 30);
+    mesh.position.set(-40, 0, 0);
 
-        polyui.addBinding(polyParams, "wireframe", { label: "wireframe" })
-          .on("change", (ev) => {
-            mesh.material.wireframe = ev.value;
-            mesh.material.needsUpdate = true;
-          });
+    // Add to scene
+    scene.add(gltf.scene);
+    window.SCENE.blender = mesh;
 
-        polyui.addButton({ title: "rotate!" })
-          .on("click", () => mesh.rotation.y += Math.PI);
-      });
+    // -----------------------------------------------------------------
+    // NORMALS HELPER (VertexNormalsHelper)
+    // -----------------------------------------------------------------
+    const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
+    helper.visible = false;
+    scene.add(helper);
+    window.SCENE.blender_helper = helper;
+
+    // -----------------------------------------------------------------
+    // UI: Blender Mesh panel
+    // -----------------------------------------------------------------
+    const blenderui = pane.addFolder({ title: "Blender Mesh" });
+
+    // Show Normals checkbox
+    blenderui.addBinding(helper, "visible", { label: "Show normals!" });
+
+    // Change Material button
+    blenderui.addButton({ title: "Change Material" })
+        .on("click", () => window.SCENE.change_material());
+
+    // Rotate button
+    blenderui.addButton({ title: "rotate!" })
+        .on("click", () => {
+            mesh.rotation.y += Math.PI;
+            helper.update(); // keep normals sync'd
+        });
+});
+
 
       //
       // LEFT CAN — ORIGINAL POLYCAM MODEL (11_18_2025.glb)
