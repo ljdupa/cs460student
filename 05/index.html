@@ -50,19 +50,19 @@
       blender_old_material: null,
 
       change_material: function () {
-        if (!window['SCENE']['blender']) return;
+        if (!window.SCENE.blender) return;
 
-        if (!window['SCENE']['blender_old_material']) {
-          window['SCENE']['blender_old_material'] =
-            window['SCENE']['blender'].material.clone();
+        if (!window.SCENE.blender_old_material) {
+          window.SCENE.blender_old_material =
+            window.SCENE.blender.material.clone();
 
-          window['SCENE']['blender'].material =
+          window.SCENE.blender.material =
             new THREE.MeshNormalMaterial();
         } else {
-          window['SCENE']['blender'].material =
-            window['SCENE']['blender_old_material'].clone();
+          window.SCENE.blender.material =
+            window.SCENE.blender_old_material.clone();
 
-          window['SCENE']['blender_old_material'] = null;
+          window.SCENE.blender_old_material = null;
         }
       }
     };
@@ -148,73 +148,64 @@
       const loader = new GLTFLoader();
 
       //
-      // EDITED (right) – monster2.glb
+      // RIGHT CAN — EDITED (monster2.glb)
       //
       loader.load("monster2.glb", (gltf) => {
-        const mesh = gltf.scene.children[0];
+        const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
+        if (!mesh) { console.error("Mesh missing in monster2.glb"); return; }
 
         mesh.scale.set(30, 30, 30);
         mesh.position.set(40, 0, 0);
 
         scene.add(gltf.scene);
-        window['SCENE']['poly'] = mesh;
+        window.SCENE.poly = mesh;
 
-        //
-        // POLYCAM MESH PANEL
-        //
-        const polyui = pane.addFolder({ title: 'PolyCam Mesh' });
-
+        const polyui = pane.addFolder({ title: "PolyCam Mesh" });
         const polyParams = { wireframe: false };
-        polyui.addBinding(polyParams, 'wireframe', { label: 'wireframe' })
-          .on('change', (ev) => {
+
+        polyui.addBinding(polyParams, "wireframe", { label: "wireframe" })
+          .on("change", (ev) => {
             mesh.material.wireframe = ev.value;
             mesh.material.needsUpdate = true;
           });
 
-        polyui.addButton({ title: 'rotate!' }).on('click', () => {
-          mesh.rotation.y += Math.PI;
-        });
+        polyui.addButton({ title: "rotate!" })
+          .on("click", () => mesh.rotation.y += Math.PI);
       });
 
-     //
-// UNEDITED (left) – 11_18_2025.glb
-//
-loader.load("11_18_2025.glb", (gltf) => {
-    // find actual mesh (PolyCam puts it inside nested groups)
-    const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
+      //
+      // LEFT CAN — ORIGINAL POLYCAM MODEL (11_18_2025.glb)
+      //
+      loader.load("11_18_2025.glb", (gltf) => {
+        const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
+        if (!mesh) { console.error("Mesh missing in 11_18_2025.glb"); return; }
 
-    if (!mesh) {
-        console.error("ERROR: No mesh found in 11_18_2025.glb");
-        return;
-    }
+        mesh.scale.set(30, 30, 30);
+        mesh.position.set(-40, 0, 0);
 
-    mesh.scale.set(30, 30, 30);
-    mesh.position.set(-40, 0, 0);
+        scene.add(gltf.scene);
+        window.SCENE.blender = mesh;
 
-    scene.add(gltf.scene);
-    window.SCENE.blender = mesh;
+        // Vertex normals helper
+        const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
+        helper.visible = false;
+        scene.add(helper);
+        window.SCENE.blender_helper = helper;
 
-    // NORMALS HELPER
-    const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
-    helper.visible = false;
-    scene.add(helper);
-    window.SCENE.blender_helper = helper;
+        // Blender UI
+        const blenderui = pane.addFolder({ title: "Blender Mesh" });
 
-    // BLENDER MESH PANEL
-    const blenderui = pane.addFolder({ title: 'Blender Mesh' });
+        blenderui.addBinding(helper, "visible", { label: "Show normals!" });
 
-    blenderui.addBinding(helper, 'visible', { label: 'Show normals!' });
+        blenderui.addButton({ title: "Change Material" })
+          .on("click", () => window.SCENE.change_material());
 
-    blenderui.addButton({ title: 'Change Material' })
-        .on('click', () => window.SCENE.change_material());
-
-    blenderui.addButton({ title: 'rotate!' })
-        .on('click', () => {
+        blenderui.addButton({ title: "rotate!" })
+          .on("click", () => {
             mesh.rotation.y += Math.PI;
             helper.update();
-        });
-});
-
+          });
+      });
 
       animate();
     };
@@ -228,11 +219,11 @@ loader.load("11_18_2025.glb", (gltf) => {
       stats.begin();
       controls.update();
 
-      if (window['SCENE']['blender_helper']) {
-        window['SCENE']['blender_helper'].update();
+      if (window.SCENE.blender_helper) {
+        window.SCENE.blender_helper.update();
       }
 
-      if (window['SCENE']['anaglyph']) {
+      if (window.SCENE.anaglyph) {
         effect.render(scene, camera);
       } else {
         renderer.render(scene, camera);
