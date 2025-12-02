@@ -180,41 +180,41 @@
 // UNEDITED (left) – 11_18_2025.glb
 //
 loader.load("11_18_2025.glb", (gltf) => {
-    const mesh = gltf.scene.getObjectByProperty('type', 'Mesh');
+    // find actual mesh (PolyCam puts it inside nested groups)
+    const mesh = gltf.scene.getObjectByProperty("type", "Mesh");
+
+    if (!mesh) {
+        console.error("ERROR: No mesh found in 11_18_2025.glb");
+        return;
+    }
 
     mesh.scale.set(30, 30, 30);
     mesh.position.set(-40, 0, 0);
 
     scene.add(gltf.scene);
-    window['SCENE']['blender'] = mesh;
+    window.SCENE.blender = mesh;
 
-    // normals helper
+    // NORMALS HELPER
     const helper = new VertexNormalsHelper(mesh, 2.0, 0x0000ff);
     helper.visible = false;
     scene.add(helper);
-    window['SCENE']['blender_helper'] = helper;
+    window.SCENE.blender_helper = helper;
 
-    //
-    // BLENDER MESH PANEL  ← ***THIS WAS MISSING***
-    //
+    // BLENDER MESH PANEL
     const blenderui = pane.addFolder({ title: 'Blender Mesh' });
 
-    // Show Normals checkbox
     blenderui.addBinding(helper, 'visible', { label: 'Show normals!' });
 
-    // MeshNormalMaterial toggle
     blenderui.addButton({ title: 'Change Material' })
-        .on('click', () => {
-            window['SCENE']['change_material']();
-        });
+        .on('click', () => window.SCENE.change_material());
 
-    // rotate button
     blenderui.addButton({ title: 'rotate!' })
         .on('click', () => {
             mesh.rotation.y += Math.PI;
             helper.update();
         });
 });
+
 
       animate();
     };
