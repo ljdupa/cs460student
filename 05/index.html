@@ -1,5 +1,9 @@
+<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <title>CS460 Assignment 5</title>
+
   <style>
     html, body {
       margin: 0;
@@ -10,6 +14,10 @@
     }
   </style>
 
+  <!-- Stats.js (non-module, exposes window.Stats) -->
+  <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+
+  <!-- ES Module shims + importmap for Three.js -->
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
   <script type="importmap">
@@ -22,32 +30,78 @@
   </script>
 
   <script type="module">
-
+    import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
+    import { AnaglyphEffect } from 'three/addons/effects/AnaglyphEffect.js';
 
-    let renderer, scene, camera, controls;
+    let renderer, scene, camera, controls, effect, stats;
 
-    window.onload = function() {
+    //
+    // SETTINGS + HELPERS FOR TWEAKPANE
+    //
+    window['SCENE'] = {
+      // Scene settings
+      'anaglyph': false,
 
+      // Mesh references
+      'poly': null,
+      'blender': null,
+      'blender_helper': null,
+      'blender_old_material': null,
+
+      // Toggle MeshNormalMaterial for the Blender mesh
+      'change_material': function () {
+        if (!window['SCENE']['blender']) return;
+
+        if (!window['SCENE']['blender_old_material']) {
+          // Store a copy of the current material and replace with MeshNormalMaterial
+          window['SCENE']['blender_old_material'] =
+            window['SCENE']['blender'].material.clone();
+
+          window['SCENE']['blender'].material =
+            new THREE.MeshNormalMaterial();
+        } else {
+          // Restore original material
+          window['SCENE']['blender'].material =
+            window['SCENE']['blender_old_material'].clone();
+
+          window['SCENE']['blender_old_material'] = null;
+        }
+      }
+    };
+
+    window.onload = function () {
       // ----------------------------
-      // SCENE + CAMERA + RENDERER
+      // SCENE
       // ----------------------------
       scene = new THREE.Scene();
 
+      // ----------------------------
+      // CAMERA
+      // ----------------------------
       const fov = 75;
       const aspect = window.innerWidth / window.innerHeight;
       const near = 0.1;
-      const far = 10000;     // required by instructions
+      const far = 10000;
+
       camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-      camera.position.set(0, 80, 160);  // recommended for PolyCam meshes
+      camera.position.set(0, 60, 120);          // A bit closer than before
       camera.lookAt(0, 20, 0);
 
+      // ----------------------------
+      // RENDERER
+      // ----------------------------
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
       document.body.appendChild(renderer.domElement);
+
+      // Anaglyph effect uses the same renderer
+      effect = new AnaglyphEffect(renderer);
+      effect.setSize(window.innerWidth, window.innerHeight);
 
       // ----------------------------
       // LIGHTS
@@ -56,70 +110,153 @@
       scene.add(ambient);
 
       const dir = new THREE.DirectionalLight(0xffffff, 2.0);
-      dir.position.set(5, 10, 7);
+      dir.position.set(5, 40, 30);
       scene.add(dir);
 
       // ----------------------------
-      // CONTROLS
+      // ORBIT CONTROLS
       // ----------------------------
       controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 20, 0);
+      controls.update();
+
+      // ----------------------------
+      // STATS.JS
+      // ----------------------------
+      if (window.Stats) {
+        stats = new window.Stats();
+        stats.showPanel(0);
+        document.body.appendChild(stats.dom);
+      }
+
+      // ----------------------------
+      // TWEAKPANE UI
+      // ----------------------------
+      const pane = new Pane();
+      const sceneui = pane.addFolder({ title: 'Scene' });
+
+      // Scene-level bindings
+      sceneui.addBinding(window['SCENE'], 'anaglyph', { label: 'anaglyph' });
+      sceneui.addBinding(dir.position, 'x', { min: -100, max: 100, label: 'Light X' });
+      sceneui.addBinding(dir.position, 'y', { min: -100, max: 100, label: 'Light Y' });
+      sceneui.addBinding(dir.position, 'z', { min: -100, max: 100, label: 'Light Z' });
+      sceneui.addBinding(dir, 'intensity', { min: 0, max: 10, label: 'Intensity' });
+
+      sceneui.addBinding(ambient, 'color', {
+        view: 'color',
+        label: 'AmbientLight Color',
+      });
 
       // ----------------------------
       // LOADERS
       // ----------------------------
       const loader = new GLTFLoader();
 
-      // --------------------------------------
-      // LOAD ORIGINAL POLYCAM MESH (monster.glb)
-      // --------------------------------------
-      loader.load("monster.glb", function( gltf ) {
-
-        const poly = gltf.scenes[0].children[0];
-
-        // scale by factor 10 per instructions
-        poly.scale.set(3, 3, 3);
-        poly.position.set(50, 0, 0);
-
-        // reset quaternion to identity
+      //
+      // PolyCam mesh (monster2.glb)
+      //
+      loader.load('monster2.glb', (gltf) => {
+        const poly = gltf.scene.children[0];
+        poly.scale.set(30, 30, 30);
+        poly.position.set(25, 0, 0);
         poly.quaternion.set(0, 0, 0, 1);
 
-
         scene.add(gltf.scene);
+        window['SCENE']['poly'] = poly;
       });
 
-      // ---------------------------------------------------------
-      // LOAD EDITED BLENDER MESH (rename "edited.glb" accordingly)
-      // ---------------------------------------------------------
-      loader.load("11_18_2025.glb", function(gltf) {
-
-        const edited = gltf.scenes[0].children[0];
-
-        // same scale as original mesh
-        edited.scale.set(30, 30, 30);
-        edited.position.set(-50, 0, 0);
-
-        // reset quaternion to identity (remove Blender export rotation)
-        edited.quaternion.set(0, 0, 0, 1);
-
+      //
+      // Blender mesh (11_18_2025.glb)
+      //
+      loader.load('11_18_2025.glb', (gltf) => {
+        const blender = gltf.scene.children[0];
+        blender.scale.set(30, 30, 30);
+        blender.position.set(-25, 0, 0);
+        blender.quaternion.set(0, 0, 0, 1);
 
         scene.add(gltf.scene);
+        window['SCENE']['blender'] = blender;
+
+        // Vertex normals helper (hidden by default)
+        const helper = new VertexNormalsHelper(blender, 2.0, 0x0000ff);
+        helper.visible = false;
+        scene.add(helper);
+        window['SCENE']['blender_helper'] = helper;
+
+        // ----------------------------
+        // POLYCAM MESH PANEL
+        // ----------------------------
+        const polyui = pane.addFolder({ title: 'PolyCam Mesh' });
+
+        // Wireframe toggle
+        const polyParams = { wireframe: false };
+        polyui.addBinding(polyParams, 'wireframe', { label: 'wireframe' })
+          .on('change', (ev) => {
+            if (!window['SCENE']['poly']) return;
+            const mesh = window['SCENE']['poly'];
+            if (mesh.material) {
+              mesh.material.wireframe = ev.value;
+              mesh.material.needsUpdate = true;
+            }
+          });
+
+        // Rotate button (180 degrees around Y)
+        polyui.addButton({ title: 'rotate!' }).on('click', () => {
+          if (!window['SCENE']['poly']) return;
+          window['SCENE']['poly'].rotation.y += Math.PI;
+        });
+
+        // ----------------------------
+        // BLENDER MESH PANEL
+        // ----------------------------
+        const blenderui = pane.addFolder({ title: 'Blender Mesh' });
+
+        // Show normals checkbox (bind directly to helper.visible)
+        blenderui.addBinding(helper, 'visible', { label: 'Show normals!' });
+
+        // Change Material button (toggles MeshNormalMaterial)
+        blenderui.addButton({ title: 'Change Material' }).on('click', () => {
+          window['SCENE']['change_material']();
+        });
+
+        // Rotate button for Blender mesh
+        blenderui.addButton({ title: 'rotate!' }).on('click', () => {
+          if (!window['SCENE']['blender']) return;
+          window['SCENE']['blender'].rotation.y += Math.PI;
+          if (window['SCENE']['blender_helper']) {
+            window['SCENE']['blender_helper'].update();
+          }
+        });
       });
 
+      // ----------------------------
+      // START ANIMATION
+      // ----------------------------
       animate();
     };
 
-
-    // ----------------------------
-    // ANIMATION LOOP
-    // ----------------------------
     function animate() {
       requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
+
+      if (stats) stats.begin();
+
+      if (controls) controls.update();
+
+      // Keep normals helper in sync
+      if (window['SCENE'] && window['SCENE']['blender_helper']) {
+        window['SCENE']['blender_helper'].update();
+      }
+
+      // Choose renderer based on anaglyph flag
+      if (window['SCENE'] && window['SCENE']['anaglyph'] && effect) {
+        effect.render(scene, camera);
+      } else if (renderer) {
+        renderer.render(scene, camera);
+      }
+
+      if (stats) stats.end();
     }
-
   </script>
-
 </head>
 <body></body>
 </html>
