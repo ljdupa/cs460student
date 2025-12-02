@@ -212,6 +212,7 @@ loader.load("monster2.glb", (gltf) => {
 
     // Blender Mesh UI
     const blenderui = pane.addFolder({ title: "Blender Mesh" });
+    blenderui.expanded = true;   // <<< FIX: KEEP PANEL OPEN
 
     blenderui.addBinding(helper, "visible", { label: "Show normals!" });
 
@@ -224,6 +225,7 @@ loader.load("monster2.glb", (gltf) => {
             helper.update();
         });
 });
+
 
 
 
