@@ -5,13 +5,7 @@
   <title>CS460 Assignment 5</title>
 
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-    }
+    html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
   </style>
 
   <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
@@ -27,131 +21,112 @@
   </script>
 
   <script type="module">
-    import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
     import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
     import { AnaglyphEffect } from 'three/addons/effects/AnaglyphEffect.js';
 
-    let renderer, effect, scene, camera, controls, stats;
+    let scene, camera, renderer, effect, stats, controls;
 
-    // Shared state for UI + models
-    const SCENE = {
+    window.SCENE = {
       anaglyph: false,
       poly: null,
-      blender: null,
-      blenderHelper: null,
-      originalMaterial: null,
-      toggleMaterial() {
-        if (!SCENE.blender) return;
-        if (!SCENE.originalMaterial) {
-          SCENE.originalMaterial = SCENE.blender.material.clone();
-          SCENE.blender.material = new THREE.MeshNormalMaterial();
-        } else {
-          SCENE.blender.material = SCENE.originalMaterial.clone();
-          SCENE.originalMaterial = null;
-        }
-      }
+      blender: null
     };
 
     window.onload = () => {
       setupScene();
       setupUI();
-      loadModel("11_18_2025.glb", -40, (mesh, pane) => {
-        SCENE.poly = mesh;
-        const cfg = { wireframe: false };
-        pane.addBinding(cfg, "wireframe").on("change", v => {
-          mesh.material.wireframe = v.value;
-          mesh.material.needsUpdate = true;
-        });
-        pane.addButton({ title: "rotate!" }).on("click", () => mesh.rotation.y += Math.PI);
-      });
-
-      loadModel("monster2.glb", 40, (mesh, pane) => {
-        SCENE.blender = mesh;
-        const helper = new VertexNormalsHelper(mesh, 2, 0x0000ff);
-        helper.visible = false;
-        scene.add(helper);
-        SCENE.blenderHelper = helper;
-
-        pane.addBinding(helper, "visible", { label: "Show normals" });
-        pane.addButton({ title: "Change Material" }).on("click", SCENE.toggleMaterial);
-        pane.addButton({ title: "rotate!" }).on("click", () => {
-          mesh.rotation.y += Math.PI;
-          helper.update();
-        });
-      });
-
+      loadPoly();
+      loadBlender();
       animate();
     };
 
     function setupScene() {
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-      camera.position.set(0, 60, 150);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 10, 80);
+
+      renderer = new THREE.WebGLRenderer({ antialias:true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
       document.body.appendChild(renderer.domElement);
 
       effect = new AnaglyphEffect(renderer);
       effect.setSize(window.innerWidth, window.innerHeight);
 
       controls = new OrbitControls(camera, renderer.domElement);
-      controls.target.set(0, 20, 0);
+
+      const amb = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(amb);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+      dir.position.set(5, 40, 30);
+      scene.add(dir);
 
       stats = new Stats();
       document.body.appendChild(stats.dom);
+    }
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    function loadPoly() {
+      var loader = new GLTFLoader();
+      loader.load('poly.glb', function(gltf) {
 
-      const dir = new THREE.DirectionalLight(0xffffff, 2);
-      dir.position.set(5, 40, 30);
-      scene.add(dir);
+        scene.add(gltf.scene);
+
+        var poly = gltf.scenes[0].children[0];
+        window.SCENE.poly = poly;
+
+        poly.scale.x = 10;
+        poly.scale.y = 10;
+        poly.scale.z = 10;
+
+        poly.quaternion.w = 1;
+        poly.quaternion.x = 0;
+        poly.quaternion.y = 0;
+        poly.quaternion.z = 0;
+
+        poly.translateX(5);
+      });
+    }
+
+    function loadBlender() {
+      var loader = new GLTFLoader();
+      loader.load('edited.glb', function(gltf) {
+
+        scene.add(gltf.scene);
+
+        var b = gltf.scenes[0].children[0];
+        window.SCENE.blender = b;
+
+        b.scale.set(10,10,10);
+
+        b.quaternion.w = 1;
+        b.quaternion.x = 0;
+        b.quaternion.y = 0;
+        b.quaternion.z = 0;
+
+        b.translateX(-5);
+      });
     }
 
     function setupUI() {
-      const pane = new Pane();
+      var pane = new Pane();
+      var sUI = pane.addFolder({ title:'Scene' });
 
-      const sceneUI = pane.addFolder({ title: "Scene" });
-      sceneUI.addBinding(SCENE, "anaglyph", { label: "anaglyph" });
+      sUI.addBinding(window.SCENE, 'anaglyph', { label:'Anaglyph' });
 
-      const lightUI = sceneUI.addFolder({ title: "Light" });
-      const light = scene.children.find(o => o.isDirectionalLight);
+      var dir = scene.children.find(o => o.isDirectionalLight);
+      var lightUI = sUI.addFolder({ title:'Light' });
 
-      ["x", "y", "z"].forEach(axis =>
-        lightUI.addBinding(light.position, axis, { min: -100, max: 100 })
+      ['x','y','z'].forEach(axis =>
+        lightUI.addBinding(dir.position, axis, { min:-100, max:100, label:'Light '+axis })
       );
-      lightUI.addBinding(light, "intensity", { min: 0, max: 10 });
+      lightUI.addBinding(dir, 'intensity', { min:0, max:10 });
 
-      sceneUI.addBinding(
-        scene.children.find(o => o.isAmbientLight),
-        "color",
-        { view: "color", label: "Ambient Color" }
-      );
-
-      return pane;
-    }
-
-    // Reusable loader
-    function loadModel(path, xOffset, onReady) {
-      const loader = new GLTFLoader();
-      const pane = new Pane().addFolder({ title: path });
-
-      loader.load(path, gltf => {
-        let mesh = null;
-        gltf.scene.traverse(c => { if (c.isMesh && !mesh) mesh = c; });
-
-        if (!mesh) return console.error("No mesh in", path);
-
-        mesh.scale.set(30, 30, 30);
-        mesh.position.set(xOffset, 0, 0);
-
-        scene.add(gltf.scene);
-        onReady(mesh, pane);
-      });
+      var amb = scene.children.find(o => o.isAmbientLight);
+      sUI.addBinding(amb, 'color', { label:'Ambient Color', view:'color' });
     }
 
     function animate() {
@@ -159,11 +134,11 @@
       stats.begin();
 
       controls.update();
-      if (SCENE.blenderHelper) SCENE.blenderHelper.update();
 
-      SCENE.anaglyph
-        ? effect.render(scene, camera)
-        : renderer.render(scene, camera);
+      if (window.SCENE.anaglyph)
+        effect.render(scene, camera);
+      else
+        renderer.render(scene, camera);
 
       stats.end();
     }
