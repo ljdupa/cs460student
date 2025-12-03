@@ -3,12 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <title>CS460 Assignment 5</title>
-
   <style>
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
   </style>
 
   <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
+
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
   <script type="importmap">
@@ -27,9 +33,9 @@
     import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
     import { AnaglyphEffect } from 'three/addons/effects/AnaglyphEffect.js';
 
-    let scene, camera, renderer, effect, stats, controls;
+    let scene, camera, renderer, effect, controls, stats;
 
-    window.SCENE = {
+    const SCENE = {
       anaglyph: false,
       poly: null,
       blender: null
@@ -38,18 +44,23 @@
     window.onload = () => {
       setupScene();
       setupUI();
-      loadPoly();
-      loadBlender();
+      loadModel("poly.glb", -20, mesh => SCENE.poly = mesh);
+      loadModel("edited.glb", 20, mesh => SCENE.blender = mesh);
       animate();
     };
 
     function setupScene() {
       scene = new THREE.Scene();
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-      camera.position.set(0, 10, 80);
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+      );
+      camera.position.set(0, 20, 80);
 
-      renderer = new THREE.WebGLRenderer({ antialias:true });
+      renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
@@ -58,75 +69,63 @@
 
       controls = new OrbitControls(camera, renderer.domElement);
 
-      const amb = new THREE.AmbientLight(0xffffff, 0.6);
+      const amb = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(amb);
 
       const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-      dir.position.set(5, 40, 30);
+      dir.position.set(10, 40, 20);
       scene.add(dir);
 
       stats = new Stats();
       document.body.appendChild(stats.dom);
     }
 
-    function loadPoly() {
-      var loader = new GLTFLoader();
-      loader.load('poly.glb', function(gltf) {
-
-        scene.add(gltf.scene);
-
-        var poly = gltf.scenes[0].children[0];
-        window.SCENE.poly = poly;
-
-        poly.scale.x = 10;
-        poly.scale.y = 10;
-        poly.scale.z = 10;
-
-        poly.quaternion.w = 1;
-        poly.quaternion.x = 0;
-        poly.quaternion.y = 0;
-        poly.quaternion.z = 0;
-
-        poly.translateX(5);
-      });
-    }
-
-    function loadBlender() {
-      var loader = new GLTFLoader();
-      loader.load('edited.glb', function(gltf) {
-
-        scene.add(gltf.scene);
-
-        var b = gltf.scenes[0].children[0];
-        window.SCENE.blender = b;
-
-        b.scale.set(10,10,10);
-
-        b.quaternion.w = 1;
-        b.quaternion.x = 0;
-        b.quaternion.y = 0;
-        b.quaternion.z = 0;
-
-        b.translateX(-5);
-      });
-    }
-
     function setupUI() {
-      var pane = new Pane();
-      var sUI = pane.addFolder({ title:'Scene' });
+      const pane = new Pane();
+      const sceneUI = pane.addFolder({ title: "Scene" });
 
-      sUI.addBinding(window.SCENE, 'anaglyph', { label:'Anaglyph' });
+      sceneUI.addBinding(SCENE, "anaglyph", { label: "Anaglyph" });
 
-      var dir = scene.children.find(o => o.isDirectionalLight);
-      var lightUI = sUI.addFolder({ title:'Light' });
+      const light = scene.children.find(o => o.isDirectionalLight);
+      const lightUI = sceneUI.addFolder({ title: "Light" });
 
-      ['x','y','z'].forEach(axis =>
-        lightUI.addBinding(dir.position, axis, { min:-100, max:100, label:'Light '+axis })
+      ["x", "y", "z"].forEach(axis =>
+        lightUI.addBinding(light.position, axis, {
+          min: -100,
+          max: 100,
+          label: `Light ${axis.toUpperCase()}`
+        })
       );
-      lightUI.addBinding(dir, 'intensity', { min:0, max:10 });
 
-      var amb = scene.children.find(o => o.isAmbientLight);
-      sUI.addBinding(amb, 'color', { label:'Ambient Color', view:'color' });
+      lightUI.addBinding(light, "intensity", {
+        min: 0,
+        max: 10,
+        label: "Intensity"
+      });
+
+
+      const amb = scene.children.find(o => o.isAmbientLight);
+      sceneUI.addBinding(amb, "color", {
+        label: "Ambient Color",
+        view: "color"
+      });
+    }
+
+    function loadModel(path, xOffset, done) {
+      const loader = new GLTFLoader();
+      loader.load(path, gltf => {
+        let mesh = null;
+        gltf.scene.traverse(o => { if (o.isMesh && !mesh) mesh = o; });
+
+        if (!mesh) return;
+
+        mesh.scale.set(10, 10, 10);
+        mesh.position.set(xOffset, 0, 0);
+        mesh.quaternion.identity();
+
+        scene.add(gltf.scene);
+        done(mesh);
+      });
     }
 
     function animate() {
@@ -135,7 +134,7 @@
 
       controls.update();
 
-      if (window.SCENE.anaglyph)
+      if (SCENE.anaglyph)
         effect.render(scene, camera);
       else
         renderer.render(scene, camera);
@@ -144,5 +143,6 @@
     }
   </script>
 </head>
+
 <body></body>
 </html>
