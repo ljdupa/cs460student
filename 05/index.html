@@ -62,6 +62,9 @@
 
       const loader = new GLTFLoader();
 
+      //
+      // PolyCam Mesh
+      //
       loader.load("11_18_2025.glb", gltf => {
         const mesh = findMesh(gltf.scene);
         mesh.scale.set(30, 30, 30);
@@ -83,7 +86,9 @@
         });
       });
 
-
+      //
+      // Blender Mesh
+      //
       loader.load("monster2.glb", gltf => {
         const mesh = findMesh(gltf.scene);
         mesh.scale.set(30, 30, 30);
@@ -168,6 +173,7 @@
       });
 
       sceneui.addBinding(dir, "intensity", { min: 0, max: 10 });
+
       sceneui.addBinding(scene.children.find(o => o.isAmbientLight), "color", {
         view: "color"
       });
@@ -176,7 +182,7 @@
     }
 
     //
-    // Animation Loop
+    // Animation Loop (NO TERNARY)
     //
     function animate() {
       requestAnimationFrame(animate);
@@ -184,11 +190,15 @@
       stats.begin();
       controls.update();
 
-      if (SCENE.blender_helper) SCENE.blender_helper.update();
+      if (SCENE.blender_helper) {
+        SCENE.blender_helper.update();
+      }
 
-      SCENE.anaglyph
-        ? effect.render(scene, camera)
-        : renderer.render(scene, camera);
+      if (SCENE.anaglyph) {
+        effect.render(scene, camera);
+      } else {
+        renderer.render(scene, camera);
+      }
 
       stats.end();
     }
